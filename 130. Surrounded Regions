@@ -1,0 +1,71 @@
+Question 130. Surrounded Regions
+Given a 2D board containing 'X' and 'O' (the letter O), capture all regions surrounded by 'X'.
+
+A region is captured by flipping all 'O's into 'X's in that surrounded region.
+
+X X X X           
+X O O X   
+X X O X
+X O X X  
+=>  
+X X X X
+X O O X
+X X O X
+X O X X
+
+Hint：
+First, check the four border of the matrix. If there is a element is
+’O’, alter it and all its neighbor ‘O’ elements to ‘1’.
+
+Then ,alter all the ‘O’ to ‘X’
+
+At last,alter all the ‘1’ to ‘O’
+
+Code:
+class Solution {
+public:
+    void solve(vector<vector<char>>& board) {
+        if(board.size()<=2)return; 
+        int row = board.size();
+        int col = board[0].size();
+        for (int i = 0; i < row; i++) {
+            dfs(board,i,0);
+            if(col>1)
+                dfs(board,i,col-1);
+		}
+        for (int j = 1; j< col ; j++) {
+            dfs(board,0,j);
+            if(row>1)
+                dfs(board,row-1,j);
+		}
+        for (int i = 0; i < row; i++) {
+			for (int j = 0; j < col; j++) {
+				if (board[i][j] == 'O') {
+					board[i][j] = 'X';
+				}
+			}
+		}
+         for (int i = 0; i < row; i++) {
+			for (int j = 0; j < col; j++) {
+				if (board[i][j] == '1') {
+					board[i][j] = 'O';
+				}
+			}
+		}
+    }
+    
+    void dfs(vector<vector<char>>& board, int x,int y) {
+        if(board[x][y]=='O'){
+            board[x][y] = '1';
+            if (x-1>=0)
+                dfs(board,x-1,y);
+            if(y-1>=0)
+                dfs(board,x,y-1);
+            if(x+1<board.size())
+                dfs(board,x+1,y);
+            if(y+1<board[0].size())
+                dfs(board,x,y+1);
+            
+		}
+	}
+};
