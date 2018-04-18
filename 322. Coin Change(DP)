@@ -1,0 +1,79 @@
+给定一系列的硬币，个数不限，给定要达到的总和，计算最少用多少个硬币的总额可以达到要求的钱数。
+
+Example 1:
+coins = [1, 2, 5], amount = 11
+return 3 (11 = 5 + 5 + 1)
+
+思路：（动态规划）
+Top-Down:
+设F（S）为达到S需要的最少的硬币的个数，给定硬币集合c0,c1,c2...cn,假定达到最后的F（S）的最后一个硬币为C则求解其子问题为：
+    F（S） = F（S-C）+1
+由于不知道C是什么所以需要遍历硬币集合c0，c1,...cn
+如：{1，2，5} amount = 6
+F（6）= minimal{F(6-1)+1,F(6-2)+1,F(6-5)+1}
+由于在递归求解的过程中容易遇到相同的子问题，所以求解得到一个子问题则将结果缓存，减少重复求解的次数
+
+Code：
+class Solution {
+public:
+    int coinChange(vector<int>& coins, int amount) {
+       sort(coins.begin(), coins.end());
+		  int size = coins.size();
+		  int min = coins[0], max = coins[size-1];
+		  int *cache = new int[amount+1];
+		  for (int i = 0; i < amount+1; i++) {
+			  cache[i] = 0;
+		  }
+		  int count = countCoins(coins, amount,cache,max,min);
+		  if (count == INT_MAX)return -1;
+		  return count;
+    }
+    
+    int countCoins(vector<int>& coins, int amount,int* cache,int max,int min) {
+		  if (amount == 0)return 0;
+		  if (amount < min)return -1;
+		  int count = INT_MAX;
+		  for (int i = 0; i < coins.size(); i++) {
+        if (coins[i] > amount)break;
+        int temp;
+        if (cache[amount - coins[i]] != 0) {
+          temp = cache[amount - coins[i]];
+        }
+        else {
+          temp = countCoins(coins, amount - coins[i], cache,max, min);
+        }
+        if (temp != -1 && temp!=INT_MAX) {
+          if (temp + 1 < count) {
+            //cout << amount << " " << temp + 1 << endl;
+            count = temp + 1;
+          }
+        }
+		}
+		cache[amount] = count;  //cache subproblem
+		return count;
+	}
+};
+
+
+Down-Top:
+For the iterative solution, we think in bottom-up manner. Before calculating F(i), we have to compute 
+all minimum counts for amounts up to ii. On each iteration ii of the algorithm F(i) is computed as 
+F(i-ci)+1
+
+Code:
+public class Solution {
+    public int coinChange(int[] coins, int amount) {
+        int max = amount + 1;             
+        int[] dp = new int[amount + 1];  
+        Arrays.fill(dp, max);  
+        dp[0] = 0;   
+        for (int i = 1; i <= amount; i++) {
+            for (int j = 0; j < coins.length; j++) {
+                if (coins[j] <= i) {
+                    dp[i] = Math.min(dp[i], dp[i - coins[j]] + 1);
+                }
+            }
+        }
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+}
