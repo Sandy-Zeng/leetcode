@@ -1,0 +1,88 @@
+给定n节课要上，但是这些课的上课顺序有一些限制，如给定限制调节[0,1],则在上课程0之前需要先完成课程1.
+那么给定需要上课的数量以及一些先决条件，编程决定是否能有一个满足所有先修条件的排课顺序。
+For example:
+2, [[1,0]] -> true
+2, [[1,0],[0,1]] -> false
+
+这里将问题转化为是否存在一个拓扑排序的问题，即检测给定的图中是否含有圈。可以采用BFS或DFS的解法。
+BFS解法：
+对于BFS，寻找一个入度为0的节点，如果不存在入度为0的节点，则表示图中含有圈，返回false。
+否则，则找到一个入度为0的节点，并将其入度设置为-1防止重复访问，然后将其余它的邻接节点的入度减1，直到所有节点都遍历完毕，最后返回true。
+
+DFS解法：
+从一个未访问过的节点开始，然后一直向深处走，直到访问到一个在条路径上已经访问过的节点，则表示图中有圈。
+若一个子图遍历完毕，没有找到圈。则从另一个没有访问过的节点开始，再走一遍DFS，直到所有节点都被访问过，且不存在圈，最后返回true。
+在DFS解法中，需要维护两个数组，第一个是vector<bool> visited，记录所有访问过的节点，第二个是vector<bool> onpath，记录在本次DFS遍历中访问过的节点。
+trick： 
+在这次代码实现中，发现在函数参数传递时，如果采用值传递会发生Time limited exceed的现象，找了很久原因，发现如果改为引用传递，就可以AC。由于在采用
+值传递时，每次调用函数和函数返回时都会相应的调用构造函数和析构函数，比起引用传递在每次函数调用时都多了两次函数的调用，引起程序效率的降低。
+
+BFS Code：
+class Solution {
+  public:
+    bool canFinish(int numCourses, vector<pair<int, int>>& prerequisites) {
+      if (prerequisites.size() == 0)return true;
+      vector<int> indegreed(numCourses, 0);
+      vector<vector<int>> graph(numCourses);
+      queue<int> zeroNode;
+      for (int i = 0; i < prerequisites.size(); i++) {
+        pair<int, int> p = prerequisites[i];
+        graph[p.second].push_back(p.first);
+        indegreed[p.first]++;
+      }
+      for (int i = 0; i < numCourses; ++i) {
+        if (indegreed[i] == 0)zeroNode.push(i);
+      }
+      int count = 0;
+      while (!zeroNode.empty()) {
+        int start = zeroNode.front();
+        zeroNode.pop();
+        count++;
+        for (int end : graph[start]) {
+          indegreed[end]--;
+          if (indegreed[end] == 0) {
+            zeroNode.push(end);
+          }
+        }
+      }
+      if (count < numCourses)return false;
+      return true;
+    }
+};
+
+
+DFS CODE:
+class Solution {
+public:
+	bool canFinish(int numCourses, vector<pair<int, int>>& prerequisites) {
+		if (prerequisites.size() == 0)return true;
+		vector<bool> visited(numCourses, false);
+		vector<bool> curvisited(numCourses, false);
+		vector<vector<int>> neighbor(numCourses);
+		for (int i = 0; i < prerequisites.size(); i++) {
+			pair<int, int> p = prerequisites[i];
+			neighbor[p.second].push_back(p.first);
+		}
+		for (int i = 0; i < numCourses; i++) {
+			if (!visited[i]) {
+				if (!isloop(i, visited, curvisited, neighbor))return false;
+			}
+		}
+		return true;
+	}
+
+	bool isloop(int start, vector<bool> &visited, vector<bool> &curvisited, vector<vector<int>> &neighbor) {//引用传递
+		if (visited[start]) return true;  //防止访问重复的DAG
+		visited[start] = curvisited[start] = true;
+		for (int end : neighbor[start]) {
+			if (curvisited[end]) {
+				return false;
+			}
+			if (!isloop(end, visited, curvisited, neighbor)) {
+				return false;
+			}
+		}
+		curvisited[start] = false;
+		return true;
+	}
+};
