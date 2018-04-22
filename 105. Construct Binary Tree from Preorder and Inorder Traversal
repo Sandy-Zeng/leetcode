@@ -1,0 +1,38 @@
+根据给出的二叉树前序和中序遍历结果，复原该二叉树
+
+根据前序的遍历结果可以指导第一个为根节点，然后在中序数组中找到该根节点所在的位置，则该位置之前的为左子树的节点，该位置之后为右子树的节点
+然后递归的处理该位置左右两边的子数组。
+For example, given
+preorder = [3,9,20,15,7]
+inorder = [9,3,15,20,7]
+Return the following binary tree:
+    3
+   / \
+  9  20
+    /  \
+   15   7
+  
+code：
+class Solution {
+  public:
+     TreeNode * buildTree(vector<int>& preorder, vector<int>& inorder) {
+        int preindex = 0, oindex = 0;
+        if (preorder.size() == 0)return NULL;
+        return recurTree(preorder, inorder, preindex, oindex,inorder.size()-1);
+    }
+
+    TreeNode * recurTree(vector<int>& preorder, vector<int>& inorder, int preindex, int oindex, int inend) {
+        if (preindex>preorder.size() - 1||oindex>inend)return NULL;
+        TreeNode *treeNode = new TreeNode(preorder[preindex]);
+        int inIndex = 0;
+        for (int i = oindex; i <= inend; i++) {
+          if (inorder[i] == treeNode->val) {
+              inIndex = i;
+              break;
+          }
+        }
+        treeNode->left = recurTree(preorder, inorder, preindex + 1, oindex, inIndex-1);
+        treeNode->right = recurTree(preorder, inorder, preindex + inIndex - oindex + 1, inIndex + 1, inend);
+        return treeNode;
+    }
+};
