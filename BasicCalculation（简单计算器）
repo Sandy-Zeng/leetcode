@@ -1,0 +1,65 @@
+Implement a basic calculator to evaluate a simple expression string.
+The expression string contains only non-negative integers, +, -, *, / operators and empty spaces . 
+The integer division should truncate toward zero.
+
+实现一个简单的计算器，用一个操作数栈A保存操作数，一个运算符栈B保存运算符。
+从左到右扫描字符串，如果遇到数字就压入栈A，在运算符的栈底保存一个具有最低优先级的运算符#
+扫描过程中遇到运算符，则比较当前运算符与栈顶运算符，如果当前运算符比栈顶运算符的优先级高则运算符入栈，否则从B弹出一个运算符，A弹出两个操作数
+进行相应的运算，将运算结果压入栈A，直到当前运算符的优先级比栈顶运算符的优先级高！
+
+class Solution {
+public:
+	int calculate(string s) {
+		stack<double> nums;  //操作数栈
+		stack<char>opr;      //运算符栈
+		opr.push('#');
+		map<char, int> index;
+		index['#'] = 0; index['+'] = 1; index['-'] = 1; index['*'] = 2; index['/'] = 2;  //定义运算符的优先级
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.at(i);
+			if (c == ' ')continue;
+			if (c == '+' || c == '-' || c == '*' || c == '/') {
+				char b = opr.top();
+				while (index[c] <= index[b]) {
+					opr.pop();
+					double num1 = nums.top(); nums.pop();
+				  double num2 = nums.top(); nums.pop();
+					double result = calcu(num2, num1, b);
+					nums.push(result);
+					b = opr.top();
+				}
+				opr.push(c);
+			}
+			else {
+				int j = i;
+				while (j < s.length()&& (c != '+'&& c != '-'&& c != '*' && c != '/')) {
+					j++;
+					if (j < s.length()) {
+						c = s.at(j);
+					}
+				}
+				double num = atoi(s.substr(i, j - i).c_str());
+				nums.push(num);
+				i = j-1;
+			}
+		}
+		char c = opr.top();
+		while (c != '#') {
+			opr.pop();
+			int num1 = nums.top(); nums.pop();
+			int num2 = nums.top(); nums.pop();
+			int result = calcu(num2, num1, c);
+			nums.push(result);
+			c = opr.top();
+		}
+		return nums.top();
+	}
+
+	double calcu(double a, double b, char op) {
+		if (op == '+')return a + b;
+		if (op == '-')return a - b;
+		if (op == '*')return a * b;
+		if (op == '/')return (double)a / b;
+	}
+
+};
