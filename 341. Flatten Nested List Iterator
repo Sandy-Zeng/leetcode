@@ -1,0 +1,65 @@
+Given a nested list of integers, implement an iterator to flatten it.
+
+Each element is either an integer, or a list -- whose elements may also be integers or other lists.
+
+Example 1:
+Given the list [[1,1],2,[1,1]],
+
+By calling next repeatedly until hasNext returns false, the order of elements returned by next should be: [1,1,2,1,1].
+
+Example 2:
+Given the list [1,[4,[6]]],
+
+By calling next repeatedly until hasNext returns false, the order of elements returned by next should be: [1,4,6]
+
+该题的主要思路是，实现一个迭代器，将数组中的数组扩展成一个数组。
+
+/**
+ * // This is the interface that allows for creating nested lists.
+ * // You should not implement it, or speculate about its implementation
+ * class NestedInteger {
+ *   public:
+ *     // Return true if this NestedInteger holds a single integer, rather than a nested list.
+ *     bool isInteger() const;
+ *
+ *     // Return the single integer that this NestedInteger holds, if it holds a single integer
+ *     // The result is undefined if this NestedInteger holds a nested list
+ *     int getInteger() const;
+ *
+ *     // Return the nested list that this NestedInteger holds, if it holds a nested list
+ *     // The result is undefined if this NestedInteger holds a single integer
+ *     const vector<NestedInteger> &getList() const;
+ * };
+ */
+class NestedIterator {
+public:
+    vector<int> iterateObj; //设置一个扩展后的数组对象
+    int pointer = 0; //设置当前迭代器迭代到的位置
+    NestedIterator(vector<NestedInteger> &nestedList) {
+        for(int i=0;i<nestedList.size();++i){
+            if(nestedList[i].isInteger()){
+                iterateObj.push_back(nestedList[i].getInteger()); //如果该元素是整数，直接压入扩展后的数组中
+            }
+            else{
+                NestedIterator subIterate(nestedList[i].getList());  //如果该元素是一个数组，调用getList获得这个Nested数组对象
+                while(subIterate.hasNext()){    //由于该数组可能是一个嵌套的数组，因此不能用普通for循环的方式将其展开，新建一个NestedIterator对象将子数组展开
+                    iterateObj.push_back(subIterate.next());
+                }
+            }
+        }
+    }
+
+    int next() {
+        return iterateObj[pointer++];
+    }
+
+    bool hasNext() {
+        return pointer < iterateObj.size();
+    }
+};
+
+/**
+ * Your NestedIterator object will be instantiated and called as such:
+ * NestedIterator i(nestedList);
+ * while (i.hasNext()) cout << i.next();
+ */
