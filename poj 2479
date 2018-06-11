@@ -1,0 +1,104 @@
+Given a set of n integers: A={a1, a2,..., an}, we define a function d(A) as below:
+                     t1     t2 
+         d(A) = max{ ∑ai + ∑aj | 1 <= s1 <= t1 < s2 <= t2 <= n }
+                    i=s1   j=s2
+Input:
+The input consists of T(<=30) test cases. The number of test cases (T) is given in the first line of the input. 
+Each test case contains two lines. The first line is an integer n(2<=n<=50000). The second line contains n integers:
+a1, a2, ..., an. (|ai| <= 10000).There is an empty line after each case
+
+Output:
+Print exactly one line for each test case. The line should contain the integer d(A).
+
+样例输入：
+1
+
+10
+1 -1 2 2 3 -3 4 -4 5 -5
+
+输出：
+13
+
+题意：将数组分为两段，分别求两端的最大子串和，然后再求出最大的S1+S2
+
+对每个位置i，求出两端的最大子串和，[1...i-1)从左到右扫描， 对于[i....n）从右到左扫描
+
+涉及到
+求最大连续子段和 的 dp算法：
+问题描述：
+     有n个数（以下都视为整数，浮点的也一样），每个数有正有负，现在要在n个数中选取相邻的一段，使其和最大，输出最大的和。
+问题分析：
+    对于这样的问题，我们可以直接用暴力，一个双重循环，虽说可以，但也没有更高明的方法？  我们再分析这个问题，如果我们知道了某个数前面一段数的和，
+    我们就该考虑把这个数加入到前一段，还是重新开始一段。这个地方很重要，如果前一段的和小于0，我们重新建一段，反之加到前一段。这样我们就可以把n个数
+    分成几段了，且每一段都求出了他们的和，然后再循环一次求出最大的一个和，我们就得到想要的结果了，也可以在分段的时候直接求结果。
+int MaxSub (int a[])  
+{    
+    int dp[N], max, i;    
+    max = dp[0] = a[0];    
+    for (i=1; i<N; i++)    
+    {    
+        if (dp[i-1] > 0)    
+            dp[i] = dp[i-1] + a[i];    
+        else    
+            dp[i] = a[i];    
+        if (dp[i] > max)    
+            max = dp[i];    
+    }    
+    return max;    
+} 
+
+本题代码
+#include<iostream>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+int newDA(vector<int> nums, int n) {
+	int *maxlift = new int[n];
+	int *maxright = new int[n];
+	maxlift[0] = nums[0];
+	for (int i = 1; i < n - 1; i++) {
+		if (maxlift[i - 1] < 0)maxlift[i] = nums[i];   //从左到右扫描，求出每一段的和
+		else {
+			maxlift[i] = maxlift[i - 1] + nums[i];
+		}
+	}
+	for (int i = 1; i < n - 1; i++) {
+		maxlift[i] = max(maxlift[i - 1], maxlift[i]);  //再遍历一次求最大的子段和
+	}
+	maxright[n-1] = nums[n-1];
+	for (int i = n - 2; i >= 1; i--) {
+		if (maxright[i + 1] < 0)maxright[i] = nums[i];
+		else {
+			maxright[i] = maxright[i + 1] + nums[i];
+		}
+	}
+	for (int i = n - 2; i >= 1; i--) {
+		maxright[i] = max(maxright[i], maxright[i + 1]);
+	}
+	int ans = maxlift[0] + maxright[1];
+	for (int i = 0; i < n-1; i++) {
+		ans = max(maxlift[i] + maxright[i + 1], ans);
+	}
+	return ans;
+}
+
+
+int main() 
+{
+	int ncase;
+	cin >> ncase;
+	for (int i = 0; i < ncase; ++i) {
+		int n;
+		cin >> n;
+		vector<int> nums;
+		for (int j = 0; j < n; ++j) {
+			int k;
+			cin >> k;
+			nums.push_back(k);
+		}
+		cout << newDA(nums, n) << endl;
+	}
+	system("pause");
+	return 0;
+}
