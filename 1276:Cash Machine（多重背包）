@@ -1,0 +1,117 @@
+题意：
+有各种不同面值的货币，每种面值的货币有不同的数量，请找出利用这些货币可以凑成的最接近且小于等于给定的数字cash的金额
+
+Input 
+多组用例，以文件尾结束输入。
+采用scanf输入识别文件尾scanf("%d%d",&cash,&denoNum)!=EOF
+
+多重背包问题
+多重背包的特征是每个物品可以取得数量为一个确定得整数，我们通过对这个整数进行拆分，使若干个物品组合成一个价值和体积均为这几个物品得和的大物品，同时通过
+这些大物品之间的组合又可以组合出选择任意件物品所包含的体积和重量的情况，通过这种拆分使最后进行0-1背包的数量大大减少，从而降低复杂度
+这些系数分别为1,2,4,…,2^k−1,n[i]−2^k+1，且k是满足n[i]−2^k+1>0的最大整数
+
+//多重背包解法  	520kB	87ms
+#include <iostream>
+#include<algorithm>
+#include<string.h>
+#include<stdio.h>
+
+using namespace std;
+
+int MAX_VALUES = 100001;
+int dp[100001];
+
+int main()
+{
+    int cash;
+    int denoNum;
+    int item[230];
+    while(scanf("%d%d",&cash,&denoNum)!=EOF){
+        memset(item,0,sizeof(item));
+        int itemNum = 0;
+        for(int i=0;i<denoNum;i++)
+        {
+            int c,b;
+            cin>>c>>b;
+            int k =1;
+            while(c-k>0)  //物品之间的组合
+            {
+                item[itemNum++] = b*k;
+                c -=k;
+                k*= 2;
+            }
+            item[itemNum++] =b * c;
+        }
+        memset(dp,0,sizeof(dp));
+        for(int i=1;i<=itemNum;i++)
+        {
+            for(int j=cash;j>=item[i-1];j--)
+            {
+                dp[j] = max(dp[j],dp[j-item[i-1]]+item[i-1]);   //状态转移方程
+            }
+        }
+        cout<<dp[cash]<<endl;
+    }
+    return 0;
+}
+
+
+//0-1背包解法  4488kB	365ms
+这题如果不做多重背包，简单的可以化为0-1背包，这样物品的数量不会减少
+#include <iostream>
+#include<stdio.h>
+#include<string.h>
+
+using namespace std;
+
+int MAX_VALUES = 100001;
+int dp[11][100001];
+int casher(int cash,int denoNum,int denominator[10],int bill[10])
+{
+    memset(dp,0,sizeof(dp));
+    for(int i=0;i<=denoNum;i++){
+         dp[i][0] = 1;
+    }
+    for(int i=1;i<=denoNum;i++)
+    {
+        for(int j=0;j<=cash;j++)
+        {
+            if(dp[i-1][j]>0)
+            {
+                for(int k = 0;k<=denominator[i-1];k++)  //遍历每一个物品
+                {
+                    int w = bill[i-1]*k;
+                    if(j+w<=cash)
+                    {
+                        dp[i][j+w] += dp[i-1][j];   //寻找组合成各种价格的钱的组合方式
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+
+    }
+    for(int j = cash;j>=0;j--)
+    {
+        if(dp[denoNum][j])return j;   //寻找由这些钱可以组合成的不超过要求钱数的最大值
+    }
+    return 0;
+}
+
+int main()
+{
+    int cash;
+    int denoNum;
+    int denominator[10];
+    int bill[10];
+    while(scanf("%d%d",&cash,&denoNum)!=EOF){
+        for(int i=0;i<denoNum;i++)
+            cin>>denominator[i]>>bill[i];
+        int maxCash = casher(cash,denoNum,denominator,bill);
+        cout<<maxCash<<endl;
+    }
+    return 0;
+}
