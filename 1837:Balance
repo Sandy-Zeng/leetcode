@@ -1,0 +1,42 @@
+题意：
+在天平的两边离天平中心不同距离有不同数量的勾子，有一堆砝码，现在需要把这些砝码全部挂到勾子上并且保持天平的平衡，杠杆原理（G = F*L），问有多少钟方案。
+（0，1）背包问题
+
+我们设状态dp[i-1][j]=x表示已经放置了前i-1个砝码(每个砝码可以放到任意钩子下)且当前平衡系数的值为j时, 共有x种方法.
+那么当我们放第i个砝码后会生成一个新的状态, 假设第i个砝码放在了相对距离C[k]的钩子下,那么有:
+dp[i][j+C[k]*W[i]] += dp[i-1][j].
+本来初值定为dp[0][0]=1,然后我们可以递推求出dp[G][0]的值即为所求. 但是C[k]*W[i]的值可能为负数(会使得数组下标为负数),
+且平衡系数值得范围为[-7500,到7500之间].15*20*25=7500.所以初值我们设为dp[0][7500]=1,然后递推求dp[G][7500]的值即可
+
+#include<iostream>
+#include<algorithm>
+using namespace std;
+int OFFSET = 7500;
+int dp[25][15001];
+
+int main() {
+	int C, G;
+	cin >> C >> G;
+	int hoop[25];
+	int weight[25];
+	for (int i = 0; i < C; i++) {
+		cin>>hoop[i];
+	}
+	for (int i = 0; i < G; i++) {
+		cin >> weight[i];
+	}
+	dp[0][OFFSET] = 1;
+	for (int i = 1; i <= G; i++) {
+		for (int j = 0; j < 2*OFFSET+1; j++) {
+			if (dp[i-1][j] > 0) {
+				for (int k = 0; k < C; k++) {
+					int w = weight[i-1] * hoop[k];  //将第i个物品放到第k个勾子上
+					dp[i][j+w]+=dp[i-1][j];
+				}
+			}
+		}
+	}
+	cout << dp[G][OFFSET] << endl;
+	system("pause");
+	return 0;
+}
