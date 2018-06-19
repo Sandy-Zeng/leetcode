@@ -1,0 +1,80 @@
+题意：
+这是个买珍珠的题，题目给出C种珍珠和每种珍珠的价格(pi)，还有每种珍珠需要买多少个(ai)，题目保证后输入的价格一定比之前的要高。
+为了防止有的人只买一个，因此每一个价位的珍珠在买的时候要额外付出十个此价格珍珠的代价，即买ai个价格为pi的珍珠，实际花费应该为 (ai + 10) * pi 。
+购买珍珠的数量不能变，但一种珍珠可以用价格更高的另一种珍珠来代替，问如何购买，才能使最后付出的代价最少。
+
+这个题主要是找替代方案，可以看出，在区间 (j ~ k) 上，若第 j 种珍珠用第 k 种珍珠替换后总代价减少，那么 j 到 k 之间的所有珍珠都可以用第 k 种来替换。
+因为价格是依次递增的，而初始价格最低的第 j 个替换后都可以使总代价减少，那么区间中其他初始价格更贵的珍珠就更加符合了。因此，可以将整个 (1 ~ C) 的
+区间分为若干个小区间，每个区间的珍珠全部替换为区间右边界的珍珠，整个问题就转变成了找一个最优的区间划分方式了。
+
+我们用 dp 数组来存储每个位置的最优解，即 dp[i] 为区间 (0 ~ i) 的最优策略。
+状态转移方程为：
+for i in range(n-1):  //右端点
+   for j in range(1,i):// 左端点
+        dp[j] = max(dp[j],dp[j]+(sum[i]-sum[j]+10)*values[i]);
+
+
+代码：
+#include <iostream>
+#include<algorithm>
+#include<string.h>
+#include<stdio.h>
+
+using namespace std;
+
+
+int numList[101];
+int valueList[101];
+int dp[101];
+int sum[101];
+
+int main()
+{
+    int caseNum;
+    cin>>caseNum;
+    while(caseNum--)
+    {
+        int c;
+        cin>>c;
+        memset(numList,0,sizeof(numList));
+        memset(valueList,0,sizeof(valueList));
+        memset(dp,0,sizeof(dp));
+        memset(sum,0,sizeof(sum));
+        for(int i=1;i<=c;i++)
+        {
+            cin>>numList[i]>>valueList[i];
+            sum[i] = sum[i-1] + numList[i];//累加和
+        }
+        for(int i=0;i<=c;i++)
+        {
+            dp[i] = (sum[i]+10)*valueList[i];
+        }
+        for(int i=1;i<=c;i++)
+        {
+            for(int j=1;j<i;j++)
+            {
+                int b = (sum[i] - sum[j]+10)*valueList[i] + dp[j];
+                dp[i] = min(dp[i],b);
+            }
+        }
+        cout<<dp[c]<<endl;
+    }
+}
+
+
+区间DP问题：
+区间dp，顾名思义就是在一段区间上进行动态规划。对于每段区间，他们的最优值都是由几段更小区间的最优值得到，
+是分治思想的一种应用，将一个区间问题不断划分为更小的区间直至一个元素组成的区间，枚举他们的组合 ，求合并后的最优值。
+
+算法结构
+设F[i,j]（1<=i<=j<=n）表示区间[i,j]内的数字相加的最小代价
+每次用变量k（i<=k<=j-1）将区间分为[i,k]和[k+1,j]两段
+
+For l:=2 to n do // 枚举区间长度
+for i:=1 to n do // 枚举区间的左端点
+begin
+j:=i+l-1; // 计算区间的右端点,因为区间长度和左端点循环嵌套枚举，保证了[i,j]内的所有子区间都被枚举到
+if j>n then break; // 保证了下标不越界
+for k:= i to j-1 do // 状态转移，去推出 f[i,j]
+f[i , j]= max{f[ i,k]+ f[k+1,j]+ w[i,j] }
+end;
