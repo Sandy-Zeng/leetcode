@@ -1,0 +1,60 @@
+题意：
+不同身高的士兵，站成一排，从中挑出最少数量的士兵，使得剩下士兵的排列让任何一个士兵都能至少看到队列的其中一端。
+
+分别从左向右，从右向左求LIS，然后枚举最长合法序列in，则n－in就是最少需要删除的数
+
+#include <iostream>
+#include<algorithm>
+#include<string.h>
+#include<stdio.h>
+
+using namespace std;
+
+float height[1001];
+int dp1[1001];
+int dp2[1001];
+int main()
+{
+    int n;
+    cin>>n;
+    for(int i=0;i<n;i++)
+    {
+        cin>>height[i];
+    }
+    dp1[0] = 1;
+    for(int i=1;i<n;i++)
+    {
+        int tmax = 1;  //以它结尾的最大递增子序列的长度至少为1
+        for(int j =0;j<i;j++)  //遍历其前面所有子序列的长度
+        {
+            if(height[i]>height[j])
+            {
+                tmax = max(tmax,dp1[j]+1);
+            }
+        }
+        dp1[i] = tmax;
+    }
+    dp2[n-1] = 1;
+    for(int i=n-2;i>=0;--i) //以它结尾的最大递减子序列
+    {
+        int tmax = 1;
+        for(int j = i;j<n;j++)
+        {
+            if(height[i]>height[j])
+            {
+                tmax = max(tmax,dp2[j]+1);
+            }
+        }
+        dp2[i] = tmax;
+    }
+    int ans = 1;
+    for(int i=0;i<n;i++)
+    {
+        for(int j=i+1;j<n;j++)
+        {
+            ans = max(ans,dp1[i]+dp2[j]);   //左边递增右边递减
+        }
+    }
+    cout<<n-ans<<endl;
+    return 0;
+}
