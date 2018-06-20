@@ -1,0 +1,66 @@
+题意：
+给出一个整数n，(1 <= n <= 200)。求出任意一个它的倍数m，要求m必须只由十进制的'0'或'1'组成。m是小于100位的十进制数。
+
+BFS：k从1开始每次模n，如果不为0，则在k后面加0或1即10*k或10*k+1 入队列，由于m是小于100位的整数，所以用整数型存不下，涉及到大数处理的问题。
+
+根据同余模定理：
+（a*b）%n = （a%n *b%n）%n
+（a+b）%n = （a%n +b%n）%n
+所以每次BFS入队列的可以是%n之后的余数，即（10*k）%n = （10*k%n）%n
+即用 前一步操作得到的余数 代替 当前步的k值
+而n在200的范围内， 余数值不可能超过3位数， 这就解决了 大数的问题
+通过这种处理手法，我们只需在BFS时顺手存储一个 余数数组mod[] ，就能通过mod[i-1]得到mod[i]  ，直到mod[i]==0 时结束，大大减少了运算时间
+
+前面已经提到，n=6时，求余操作进行了14次，对应地，BFS时*10的操作也进行了14次。
+令i=14，通过观察发现，i%2恰好就是 6 的倍数的最低位数字
+i/2  再令 i%2 ，恰好就是 6 的倍数的 次低位数字。。。
+循环这个操作，直到i=0，就能得到 6的 01倍数(一个01队列)，倒序输出就是所求
+这样就完成了 *10操作到 %2操作的过渡
+
+#include<iostream>
+#include<queue>
+using namespace std;
+int main()
+{
+    int n;
+    cin>>n;
+    while(n)
+    {
+        queue<int> mod;  //存每次取模后的余数
+        int cons = 1;
+        mod.push(1%n);
+        int temp = mod.front();
+        while(temp)
+        {
+            mod.pop();
+            int a = (temp*10)%n;  
+            cons++;   //计数取模操作的次数
+            if(a)
+            {
+                mod.push(a);
+            }
+            else break;  //如果取模为0，则退出循环
+            int b = (temp*10+1)%n;
+            cons++;
+            if(b)
+            {
+                mod.push(b);
+            }
+            else break;
+            temp = mod.front();
+        }
+        int result[100];
+        int lens = 0;
+        while(cons)
+        {
+            result[lens++] = cons%2;   //根据取模的次数，反推出01序列
+            cons/=2;
+        }
+        for(int i=lens-1;i>=0;i--)
+        {
+            cout<<result[i];
+        }
+        cout<<endl;
+        cin>>n;
+    }
+}
