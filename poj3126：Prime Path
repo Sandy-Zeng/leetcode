@@ -1,0 +1,98 @@
+题意：
+给出两个四位数的数字，目的是每次只能变换四位数中的一个数字，并且变化后的数字必须是素数，问需要最少多少次变换才能变为目标数字
+
+思路：广搜
+由于数字的范围是1000-9999，因此设置一个1000维的数组判断该数字是否被重复访问，如果被重复访问则不入队
+在进行BFS之前，先判断1000-9999中哪些数字是素数并用一个1000维的数组进行记录，加快BFS时的判断速度。
+对每个数字分别对个十百千位进行变换，将变换后是素数并且没有访问过的数字入队
+
+代码：
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<queue>
+using namespace std;
+
+bool isPrime(int N)   //判断是否是素数
+{
+    for(int i=2;i<N;i++)
+    {
+        if(N%i==0)return false;
+    }
+    return true;
+}
+
+int visit[10000]; //是否访问过
+int prime[10000]; //是否是素数
+int main()
+{
+   int N;
+   for(int i=0;i<10000;i++)   //素数预判断
+   {
+       if(isPrime(1000+i))
+       {
+           prime[i] = 1;
+       }
+   }
+   cin>>N;
+   while(N--)
+   {
+       int I,E;
+       queue<int> route;
+       cin>>I>>E;
+       route.push(I);
+       visit[I-1000] = 1;
+       int num = 1;
+       int times = 0;
+       int leaves = 0;
+       memset(visit,0,sizeof(visit));
+       int round = 0;
+       while(!route.empty())
+       {
+           while(num--)
+           {
+               int s = route.front();
+               route.pop();
+               if(s==E)
+               {
+                   cout<<times<<endl;
+                   round = 1;
+                   break;
+               }
+               int digit[4];
+               digit[0] = s/1000;   //将四位数的每一位拆开
+               s%=1000;
+               digit[1] = s/100;
+               s%=100;
+               digit[2] = s/10;
+               digit[3] = s%=10;
+               for(int i=0;i<4;i++)
+               {
+                   int temp = digit[i];   //暂存原来的那位数字
+                   for(int j = 0;j<=9;j++)
+                   {
+                       if(i==0&&j==0)continue;
+                       if(j==digit[i])continue;
+                       digit[i] = j;
+                       int k = digit[0]*1000+digit[1]*100+digit[2]*10+digit[3];
+                       if(visit[k-1000])continue;
+                       if(!prime[k-1000])continue;
+                      // cout<<k<<endl;
+                       route.push(k);
+                       visit[k-1000] = 1;
+                       leaves++;
+                   }
+                   digit[i] = temp;
+               }
+           }
+           if(round)break;
+           num = leaves;
+           leaves = 0;
+           times++;
+       }
+       if(round==0)
+        cout<<"Impossible"<<endl;
+   }
+   cin>>N;
+   return 0;
+}
