@@ -1,0 +1,64 @@
+题意：
+在一条直线有两个点n,m(0 <= n,m <= 100000);对n有三种操作+1，-1，*2，最少操作多少次让其等于m
+
+思路：
+广搜+剪枝
+用一个数组记录该状态是否被访问过，如果访问过则不重复访问
+剪枝：
+1、当当前位置-1>0时才进行-1操作
+2、当当前位置+1<最大位置时才进行+1操作
+3、当当前位置*2<最大位置时才进行*2操作
+
+到达目标状态的最少步数为多叉树的层数，每次记录多叉树的层数
+用结构体记录状态信息，MEMORY LIMITED EXEEDED
+
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<queue>
+using namespace std;
+
+short record[200000];
+
+int main()
+{
+    queue<int> S;
+    int N,C;
+    cin>>N>>C;
+    S.push(N);
+    int cost = 0;
+    int levelNum = 1;
+    int newNum = 0;
+    while(!S.empty())
+    {
+        while(levelNum--)
+        {
+            int s = S.front();
+            S.pop();
+            record[s] = 1;
+            if(s==C)
+            {
+                cout<<cost<<endl;
+                return 0;
+            }
+            if(s+1<200000 && !record[s+1])
+            {
+                  S.push(s+1);
+                  newNum++;
+            }
+            if(s-1<200000 && s-1>= 0 && !record[s-1])
+            {
+                 S.push(s-1);
+                 newNum++;
+            }
+            if(s*2<200000 && !record[s*2])
+            {
+                 S.push(s*2);
+                 newNum++;
+            }
+        }
+        levelNum = newNum;
+        cost++;
+        newNum = 0;
+    }
+}
