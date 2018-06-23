@@ -1,0 +1,186 @@
+题意：
+给定两个容量分别为A，B的瓶子，每次可以进行三种操作，FILL(id)将某个瓶子填满，DROP(id)将某个瓶子的水全部倒掉，POUR(id1,id2)将瓶子1中的倒向瓶子2.给定容量C，请问让某个瓶子中的水为C的最少操作是什么
+
+输出需要输出最少的操作次数，以及操作的序列。
+
+考虑到需要求最少的操作次数，采用BFS的方法，对于每种状态，用结构体记录A,B瓶子中的剩余水量，同时根据剩余水量分别进行FILL,DROP,POUR三种
+操作，并生成新的状态，在结构体中用0，1，2三个数字分别记录进行了三种操作中的哪一种。为了记录操作路径，在结构体中记录这个状态是从哪个状态来的，同时用一个id号记录当前状态在数组中的哪个位置。为防止重复计算已经计算过的状态，用一个二维数组，分别记录AB两个瓶子中的剩余水量的组合，若该状态已经压入到数组中则不再重复记录。最后用一个point整数指针记录当前队列头在数组中的位置，每次从队列头中取出一个状态，分别进行三种操作之后产生新的状态存入到数组中，若取出的状态中某个瓶子中的剩余水量为C则跳出循环，根据状态中记录的上一个状态在数组中的下标回溯并逆序输出。若到数组为空仍没达到目标状态则输出impossible。
+
+代码：
+#include<iostream>
+#include<queue>
+#include<stdio.h>
+#include<string.h>
+#include<vector>
+
+using namespace std;
+
+
+struct status
+{
+    int action;
+    int id1;
+    int id2;
+    int aleft;
+    int bleft;
+    int lastS;
+    int loc;
+    status(int a,int d1,int d2,int a1,int b1,int ls,int id)
+    {
+        action = a;id1 = d1;id2 = d2;aleft = a1;bleft = b1;
+        lastS = ls;loc = id;
+    }
+};
+
+int A,B,C;
+int record[101][101];
+vector<status> S;
+int num = 0;
+
+void pushS(status k)
+{
+    //cout<<record[k.aleft][k.bleft]<<" "<<k.aleft<<" "<<k.bleft<<endl;
+    if(record[k.aleft][k.bleft]==0)
+    {
+        S.push_back(k);
+        record[k.aleft][k.bleft] = 1;
+    }
+    else
+    {
+        num--;
+    }
+}
+
+void fill_bot(status &k,int id)
+{
+    if(id==1)
+    {
+        k.aleft = A;
+    }
+    if(id==2)
+    {
+        k.bleft = B;
+    }
+    pushS(k);
+}
+
+void drop(status &k,int id)
+{
+    if(id==1)
+    {
+        k.aleft = 0;
+    }
+    if(id==2)
+    {
+        k.bleft = 0;
+    }
+    pushS(k);
+}
+
+void pour(status &k,int id1,int id2)
+{
+    if(id1==1&&id2==2)
+    {
+        if(k.aleft>=(B-k.bleft))
+        {
+            k.aleft -= (B-k.bleft);
+            k.bleft = B;
+        }
+        else
+        {
+            k.bleft += k.aleft;
+            k.aleft = 0;
+        }
+    }
+    if(id1==2&&id2==1)
+    {
+        if(k.bleft>=(A-k.aleft))
+        {
+            k.bleft -= (A-k.aleft);
+            k.aleft = A;
+        }
+        else
+        {
+            k.aleft += k.bleft;
+            k.bleft = 0;
+        }
+    }
+    pushS(k);
+}
+
+void show(status s)
+{
+    if(s.action==0)
+        cout<<"FILL("<<s.id1<<")"<<endl;
+    if(s.action==1)
+        cout<<"DROP("<<s.id1<<")"<<endl;
+    if(s.action==2)
+        cout<<"POUR("<<s.id1<<","<<s.id2<<")"<<endl;
+}
+
+
+void showSeq(status s)
+{
+    vector<status> seq;
+    seq.push_back(s);
+    int loc = s.lastS;
+    while(loc!=-1)
+    {
+        seq.push_back(S[loc]);
+        loc = S[loc].lastS;
+    }
+    cout<<seq.size()<<endl;
+    for(int i=seq.size()-1;i>=0;i--)
+    {
+        status s = seq[i];
+        show(s);
+    }
+}
+
+int main()
+{
+    cin>>A>>B>>C;
+    memset(record,0,sizeof(record));
+    S.push_back(status(0,1,-1,A,0,-1,num++));
+    S.push_back(status(0,2,-1,0,B,-1,num++));
+    record[A][0] = 1;
+    record[0][B] = 1;
+    int point = 0;
+    while(point<S.size())
+    {
+        status s = S[point++];
+        //cout<<s.aleft<<" "<<s.bleft<<endl;
+        if(s.aleft==C||s.bleft==C)
+        {
+            showSeq(s);
+            return 0;
+        }
+        if(s.aleft<A)
+        {
+             status k(0,1,-1,s.aleft,s.bleft,s.loc,num++);
+             fill_bot(k,1);
+        }
+        if(s.bleft<B)
+        {
+            status k(0,2,-1,s.aleft,s.bleft,s.loc,num++);
+            fill_bot(k,2);
+        }
+        if(s.aleft>0)
+        {
+             status k(1,1,-1,s.aleft,s.bleft,s.loc,num++);
+             drop(k,1);
+
+             status k1(2,1,2,s.aleft,s.bleft,s.loc,num++);
+             pour(k1,1,2);
+        }
+        if(s.bleft>0)
+        {
+             status k(1,2,-1,s.aleft,s.bleft,s.loc,num++);
+             drop(k,2);
+             status k1(2,2,1,s.aleft,s.bleft,s.loc,num++);
+             pour(k1,2,1);
+        }
+    }
+    cout<<"impossible"<<endl;
+    return 0;
+}
