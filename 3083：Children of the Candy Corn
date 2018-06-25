@@ -1,0 +1,251 @@
+题意：
+有一个迷宫，有入口和出口，问按左转优先，右转优先，最短路径分别需要的步数是多少。
+
+思路：
+DFS和BFS综合题。对于左转优先和右转优先采用DFS求解，对于左转和右转的方向确定需要记录一下当前行走的方向，用0，1，2，3记录当前是向上，向左，向下，向右。第
+一步的方向由初始位置决定。DFS采用递归求解。
+对于左转优先，当前方向dir=0向上走：
+1、若左边不是墙则左转
+2、若上方不是墙则向上走
+3、若右边不是墙则向右转
+4、否则走入死胡同，回退
+
+按照多入口方式根据当前状态依次判断。
+
+Code：
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<queue>
+using namespace std;
+
+struct step
+{
+    int i;
+    int j;
+    step(int i1,int j1)
+    {
+        i = i1;
+        j = j1;
+    }
+};
+
+char maze[40][40];
+bool visit[40][40];
+int w,h;
+
+int shortestPath(step bpoint)
+{
+    queue<step> seq;
+    seq.push(bpoint);
+    visit[bpoint.i][bpoint.j] = true;
+    int times = 1;
+    int num = 1;
+    int leaves = 0;
+    while(!seq.empty())
+    {
+        while(num--)
+        {
+            step s = seq.front();
+            seq.pop();
+            //cout<<s.i<<" "<<s.j<<" "<<s.k<<" "<<maze[s.i][s.j][s.k]<<endl;
+            if(maze[s.i][s.j]=='E')
+            {
+                return times;
+            }
+            if(s.i-1>=0&&maze[s.i-1][s.j]!='#'&&visit[s.i-1][s.j]==false)
+            {
+                seq.push(step(s.i-1,s.j));
+                visit[s.i-1][s.j] = true;
+                leaves++;
+            }
+            if(s.i+1<w&&maze[s.i+1][s.j]!='#'&&visit[s.i+1][s.j]==false)
+            {
+                seq.push(step(s.i+1,s.j));
+                visit[s.i+1][s.j] = true;
+                leaves++;
+            }
+            if(s.j-1>=0&&maze[s.i][s.j-1]!='#'&&visit[s.i][s.j-1]==false)
+            {
+                seq.push(step(s.i,s.j-1));
+                visit[s.i][s.j-1] = 1;
+                leaves++;
+            }
+            if(s.j+1<h&&maze[s.i][s.j+1]!='#'&&visit[s.i][s.j+1]==0)
+            {
+                seq.push(step(s.i,s.j+1));
+                visit[s.i][s.j+1] = true;
+                leaves++;
+            }
+        }
+        times++;
+        num = leaves;
+        leaves = 0;
+    }
+    return 0;
+}
+
+int leftDFS(int i,int j,int depth,int dir,int &r)
+{
+    //cout<<i<<" "<<j<<" "<<depth<<endl;
+    if(maze[i][j]=='E')
+    {
+        r = 0;
+        return depth;
+    }
+    if(dir==0)  //top
+    {
+        if(r&&j-1>=0&&maze[i][j-1]!='#')
+            depth = leftDFS(i,j-1,depth+1,3,r);   //left
+        if(r&&i-1>=0&&maze[i-1][j]!='#')
+            depth = leftDFS(i-1,j,depth+1,dir,r);  //top
+        if(r&&j+1<h && maze[i][j+1]!='#')
+            depth = leftDFS(i,j+1,depth+1,1,r);
+    }
+    if(dir==1) //right
+    {
+        if(r&&i-1>=0&&maze[i-1][j]!='#')
+            depth = leftDFS(i-1,j,depth+1,0,r);   //top
+        if(r&&j+1<h&&maze[i][j+1]!='#')
+            depth = leftDFS(i,j+1,depth+1,dir,r);  //right
+        if(r&&i+1<w&&maze[i+1][j]!='#')
+            depth = leftDFS(i+1,j,depth+1,2,r);
+    }
+    if(dir==2) //down
+    {
+        if(r&&j+1<h&&maze[i][j+1]!='#')
+            depth = leftDFS(i,j+1,depth+1,1,r);   //right
+        if(r&&i+1<w&&maze[i+1][j]!='#')
+            depth = leftDFS(i+1,j,depth+1,dir,r);  //down
+        if(r&&j-1>0&&maze[i][j-1]!='#')
+            depth = leftDFS(i,j-1,depth+1,3,r);
+    }
+    if(dir==3) //left
+    {
+        if(r&&i+1<w&&maze[i+1][j]!='#')
+            depth = leftDFS(i+1,j,depth+1,2,r);   //down
+        if(r&&j-1>=0&&maze[i][j-1]!='#')
+            depth = leftDFS(i,j-1,depth+1,dir,r);  //left
+        if(r&&i-1>=0&&maze[i-1][j]!='#')
+            depth = leftDFS(i-1,j,depth+1,0,r);
+    }
+    if(r)
+    {
+        depth++;
+        //cout<<i<<" "<<j<<" "<<depth<<endl;
+        return depth;
+    }
+    else
+    {
+        return depth;
+    }
+}
+
+
+int rightDFS(int i,int j,int depth,int dir,int &r)
+{
+    //cout<<i<<" "<<j<<" "<<depth<<endl;
+    if(maze[i][j]=='E')
+    {
+        r = 0;
+        return depth;
+    }
+    if(dir==0)  //top
+    {
+        if(r&&j+1<h&&maze[i][j+1]!='#')
+            depth = rightDFS(i,j+1,depth+1,1,r);   //left
+        if(r&&i-1>=0&&maze[i-1][j]!='#')
+            depth = rightDFS(i-1,j,depth+1,dir,r);  //top
+        if(r&&j-1>=0 && maze[i][j-1]!='#')
+            depth = rightDFS(i,j-1,depth+1,3,r);
+    }
+    if(dir==1) //right
+    {
+        if(r&&i+1<w&&maze[i+1][j]!='#')
+            depth = rightDFS(i+1,j,depth+1,2,r);
+        if(r&&j+1<h&&maze[i][j+1]!='#')
+            depth = rightDFS(i,j+1,depth+1,dir,r);  //right
+        if(r&&i-1>=0&&maze[i-1][j]!='#')
+            depth = rightDFS(i-1,j,depth+1,0,r);   //top
+    }
+    if(dir==2) //down
+    {
+        if(r&&j-1>0&&maze[i][j-1]!='#')
+            depth = rightDFS(i,j-1,depth+1,3,r);
+        if(r&&i+1<w&&maze[i+1][j]!='#')
+            depth = rightDFS(i+1,j,depth+1,dir,r);  //down
+        if(r&&j+1<h&&maze[i][j+1]!='#')
+            depth = rightDFS(i,j+1,depth+1,1,r);   //right
+    }
+    if(dir==3) //left
+    {
+        if(r&&i-1>=0&&maze[i-1][j]!='#')
+            depth = rightDFS(i-1,j,depth+1,0,r);
+        if(r&&j-1>=0&&maze[i][j-1]!='#')
+            depth = rightDFS(i,j-1,depth+1,dir,r);  //lef
+        if(r&&i+1<w&&maze[i+1][j]!='#')
+            depth = rightDFS(i+1,j,depth+1,2,r);   //down
+    }
+    if(r)
+    {
+        depth++;
+        //cout<<i<<" "<<j<<" "<<depth<<endl;
+        return depth;
+    }
+    else
+    {
+        return depth;
+    }
+}
+
+int main()
+{
+   int N;
+   cin>>N;
+   while(N--)
+   {
+       w = 0;h = 0;
+       cin>>h>>w;
+       memset(maze,'0',sizeof(maze));
+       memset(visit,false,sizeof(visit));
+       int si,sj;
+       for(int i=0;i<w;i++)
+       {
+           for(int j=0;j<h;j++)
+           {
+               cin>>maze[i][j];
+               if(maze[i][j]=='S')
+               {
+                   si = i;
+                   sj = j;
+               }
+           }
+       }
+       step bpoint = step(si,sj);
+       int spath = shortestPath(bpoint);
+       memset(visit,false,sizeof(visit));
+       int dir;
+       if(sj==0)
+       {
+           dir = 1;//right
+       }
+       if(sj==h-1)
+       {
+           dir = 3;//left
+       }
+       if(si==0)
+       {
+           dir = 2;//down
+       }
+       if(si==w-1)
+       {
+           dir = 0;//top
+       }
+       int r = 1;
+       int lpath = leftDFS(si,sj,1,dir,r);
+       r = 1;
+       int rpath = rightDFS(si,sj,1,dir,r);
+       cout<<lpath<<" "<<rpath<<" "<<spath<<endl;
+   }
+   return 0;
+}
