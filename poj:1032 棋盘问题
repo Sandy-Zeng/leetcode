@@ -1,0 +1,72 @@
+题意：
+在一个给定形状的棋盘（形状可能是不规则的）上面摆放棋子，棋子没有区别。
+要求摆放时任意的两个棋子不能放在棋盘中的同一行或者同一列，请编程求解对于给定形状和大小的棋盘，摆放k个棋子的所有可行的摆放方案C。
+
+输入：
+每组数据的第一行是两个正整数，n k，用一个空格隔开，表示了将在一个n*n的矩阵内描述棋盘，以及摆放棋子的数目。 n <= 8 , k <= n 
+当为-1 -1时表示输入结束。 
+随后的n行描述了棋盘的形状：每行有n个字符，其中 # 表示棋盘区域， . 表示空白区域（数据保证不出现多余的空白行或者空白列）
+
+思路：
+采用DFS，逐行搜索。采用bool数组visit_col记录某列是否已经摆放棋子。当回溯时，回复visit_col中相应列为false.
+当k<n时，可能在某一行不摆放棋子
+
+
+Code：
+
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<queue>
+using namespace std;
+
+bool chess[8][8]; //棋盘
+bool visitCol[8];//标记该列是否放了棋子
+int n,k;
+int status; //记录当前有几种状态
+
+void DFS(int row,int num)  //row表示第几行，num表示已经摆放的棋子的数目
+{
+    if(num==k)
+    {
+        status++;
+        return;
+    }
+    if(row>=n)return;        //防止越界，递归停止
+    for(int i=0;i<n;i++)     //逐列扫描，当扫描到某一列时若同时为棋盘区域以及该列没放过棋子，递归下一行
+    {
+        if(chess[row][i]&&visitCol[i]==false)
+        {
+            visitCol[i] = true;
+            DFS(row+1,num+1);
+            visitCol[i] = false;//回溯递归到原状态
+        }
+    }
+    DFS(row+1,num);//在这一行不放棋子
+    return;
+}
+
+int main()
+{
+    cin>>n>>k;
+    while(n!=-1&&k!=-1)
+    {
+        memset(chess,false,sizeof(chess));
+        memset(visitCol,false,sizeof(visitCol));
+        status = 0;
+        for(int i=0;i<n;i++)
+        {
+            for(int j=0;j<n;j++)
+            {
+                char temp;
+                cin>>temp;
+                if(temp=='#')
+                    chess[i][j] = true;
+            }
+        }
+        DFS(0,0);
+        cout<<status<<endl;
+        cin>>n>>k;
+    }
+    return 0;
+}
