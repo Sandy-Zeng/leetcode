@@ -1,0 +1,291 @@
+题意:
+第一行数字是邮票的面值，每一个数字就是一个不同的种类，哪怕面值相同。以0结束。
+第二行数字是顾客所需要的邮票总面值。每个数字就是一个顾客的需求，以0结束。
+每两行是一组case。以EOF结束输入。
+顾客是集邮爱好者，所以你必须尽可能的给他不同种类的邮票。
+但是一位顾客最多只能拿4张邮票。
+显然，我们拥有的邮票就是第一行中的数据。每种面值的邮票数量
+
+关于tie。
+满足顾客需求的解就是可行解。
+邮票种类最多的可行解为最优。
+如果存在两个以上的最优解的邮票种类是一样的，张数最少的更优
+张数也一样的话，这些最优解中最大面值较大的更优。
+若邮票种类、张数、最大面值三者都分别相同，则认为这些最优解相同，输出tie。
+没有解就是none。
+
+
+方法1：
+采用DFS枚举所有答案，然后比较所有答案，找到最优的
+#include<cstdio>
+#include<iostream>
+#include<algorithm>
+#include<cstring>
+using namespace std;
+int value[555],res,m;//value数组存储邮票价值,res存储邮票张数,m存储消费者所需价值 
+int ans[5],ansnum;//ans存储答案值在value数组中对应的下标,ansnum表示答案所对应的邮票数 
+int temp[5],cnt;//temp数组存储中间答案(同样是下标),cnt表示temp对应的邮票数 
+bool tie,flag;//tie表示是否出现平局的情况,flag标记是否有解 
+bool vis[555];//标记数组,用来统计邮票种类数 
+int get_kind(int *s,int n)//统计邮票种类数 
+{
+    int ans=0;
+    memset(vis,0,sizeof(vis));
+    for(int i=0;i<n;i++)
+        if(!vis[s[i]])
+            ans++,vis[s[i]]=1;
+    return ans;
+}
+int get_max(int *s,int n)//找出邮票中的最大价值 
+{
+    int ans=0;
+    for(int i=0;i<n;i++)
+        ans=max(ans,value[s[i]]);
+    return ans;
+}
+void cmp()
+{
+    int temp_kind=get_kind(temp,cnt);
+    int temp_max=get_max(temp,cnt);
+    int ans_kind=get_kind(ans,ansnum);
+    int ans_max=get_max(ans,ansnum);
+    if(ansnum==0||temp_kind>ans_kind||temp_kind==ans_kind&&ansnum>cnt||temp_kind==ans_kind&&ansnum==cnt&&temp_max>ans_max)
+    {
+        //更新答案的几种情况
+        //1.尚未得到一组答案
+        //2.当前答案比已知答案种类数多
+        //3.当前答案比已知答案达到相同种类数时所拿邮票数少 
+        //4.当前答案比已知答案在拿相同邮票数并且邮票种类数相同时所拿邮票最大价值大 
+        tie=0;
+        ansnum=cnt;
+        for(int i=0;i<cnt;i++)
+            ans[i]=temp[i];
+    }
+    if(ansnum==cnt&&temp_kind==ans_kind&&temp_max==ans_max)//平局 
+        tie=1;
+}
+void dfs(int pos,int sum)//pos表示当前搜索到的邮票编号,sum表示当前已经拿的邮票价值 
+{
+    if(sum>m)return ;//当前值已经大于目标值,不用继续搜索,剪枝 
+    if(sum==m)//遇到合法解 
+    {
+        flag=1;//标记有解 
+        cmp();//更新最优解 
+    }       
+    if(cnt==4)return ;//已经拿四张邮票,剪枝 
+    for(int i=pos;i<res;i++)   //DFS枚举每种邮票的组合
+    {
+        temp[cnt]=i;//记录中间答案 
+        cnt++; 
+        dfs(i,sum+value[i]);//深搜 
+        cnt--;//回溯 
+    }
+}
+int main()
+{
+    while(~scanf("%d",&value[0]))
+    {
+        res=0;
+        while(value[res])
+            scanf("%d",&value[++res]);
+        sort(value,value+res);//对邮票价值由小到大排序 
+        while(scanf("%d",&m),m)
+        {
+            tie=flag=0;//初始化 
+            ansnum=cnt=0;
+            dfs(0,0);
+            if(!flag)//无解 
+                printf("%d ---- none\n",m);
+            else
+            {
+                printf("%d (%d):",m,get_kind(ans,ansnum));
+                if(tie)printf(" tie\n");//平局 
+                else
+                {
+                    sort(ans,ans+ansnum);//对最优方案所拿邮票的价值排序输出 
+                    for(int i=0;i<ansnum;i++)
+                        printf(" %d",value[ans[i]]);
+                    printf("\n");
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+
+解法2：
+采用多重背包，解达到每种面值的方案数目，在动态规划过程中，记录路径，采用DFS递归的方式遍历所有方案，并找到最优解
+
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+vector<int> result;//记录最优解的组合
+int types;  //记录最优解有多少钟邮票
+vector<int> temp;  //记录中间解
+bool tie = false;   //记录是否打平
+
+void DFS(int **path,int j,int k,int *visit,int num)    
+{
+     //path 动态规划过程中记录路径
+     //j是取第几钟邮票
+     //k是客户的要求还有多少没有满足
+     //visit记录每种邮票是否已经加入到组合中
+     //num记录当前用了多少钟邮票
+    if(temp.size()>4||j<0)
+    {
+        //每个人持有的邮票数量不超过过四张，剪枝
+        return;
+    }
+    if(k==0)  //k到0,产生了一种新的组合，更新最优结果
+    {
+        if(result.size()==0 || num>types ||(num == types && temp.size()<result.size())
+            || (num==types && temp.size() == result.size() && temp[0]>result[0])) //最早压进去的是面值最大的
+        {
+            //如果满足以上条件之一，则更新最优值
+            result.assign(temp.begin(),temp.end());
+            types = num;
+            tie = false;
+        }
+        else if((num==types && temp.size() == result.size() && temp[0] == result[0]))
+        {
+            //打平
+            tie = true;
+        }
+        return;
+    }
+    for(int t = 0;t<=j;t++){       //每一行代表一种类型的邮票
+        if(j-t>=0&&path[j-t][k])   //因为是多重背包，所以对于需求k可能有多种组合，因此遍历k列寻找所有路径组合
+        {
+            temp.push_back(path[j-t][k]);    //如果path[j-t][k]不为0，表示从这里可以回溯找到一条路径
+            if(visit[j-t]==0)     //如果这种邮票没有加入到组合中，
+            {
+                visit[j-t]++;     //相应的将这种邮票的数量加1
+                DFS(path,j-t,k-path[j-t][k],visit,num+1);  //组合的邮票种类数量+1
+            }
+            else
+            {
+                visit[j-t]++;      //否则只是将这种邮票的数量加1，递归时邮票种类数不变
+                DFS(path,j-t,k-path[j-t][k],visit,num);
+            }
+            temp.pop_back();      //回溯，将这张邮票从组合中弹出
+            visit[j-t]--;
+        }
+    }
+    return;
+}
+
+void allocation(vector<int> stamps,vector<int> customers)
+{
+    int needs = 0;
+    for(int i=0;i<customers.size();i++)
+    {
+        needs = max(needs,customers[i]);      //求这一组客人中要求最大的是多少
+    }
+    int *dp = new int[needs+1];
+    int **path =  new int*[stamps.size()];
+    int *visit = new int[stamps.size()];
+    for(int k = 0;k<stamps.size();k++)
+    {
+        path[k] = new int[needs+1];
+        visit[k] = 0;
+    }
+    for(int i=0;i<stamps.size();i++)
+    {
+        for(int j=0;j<needs+1;j++)
+        {
+            path[i][j] = 0;
+        }
+    }
+    dp[0] = 1;
+    for(int j=0;j<stamps.size();j++)
+    {
+        for(int k=1;k<=needs;k++)
+        {
+            if(k-stamps[j]>=0 && dp[k-stamps[j]])    //多重背包
+            {
+                dp[k] = 1;
+                path[j][k] = stamps[j];              //记录那种邮票被放入组合中
+            }
+        }
+    }
+    for(int i=0;i<customers.size();i++)             //求这一组客人中，每个人取得邮票的最优组合
+    {
+        int j = stamps.size()-1;
+        int need = customers[i];
+        if(dp[need]==0)
+            cout<<customers[i]<<" ---- none"<<endl;   //无解
+        else
+        {
+            while(j>=0 && path[j][need]==0)j--;      //找到第一次有解的行
+            //初始化，所有的变量清空
+            result.clear();
+            temp.clear();
+            types = 0;
+            tie = false;
+            //递归求最优解
+            DFS(path,j,need,visit,0);
+            //输出解
+            if(tie)
+            {
+                cout<<customers[i]<<" ("<<types<<"): tie"<<endl;
+            }
+            else
+            {
+                if(result.size()>0)
+                {
+                    cout<<customers[i]<<" ("<<types<<"):";
+                    for(int i = result.size()-1;i>=0;i--)
+                        cout<<" "<<result[i];
+                    cout<<endl;
+                }
+                else
+                {
+                    cout<<customers[i]<<" ---- none"<<endl;
+                }
+            }
+        }
+    }
+}
+
+
+int main()
+{
+    int n;
+    int flag = 0;
+    int num = 0;
+    vector<int> stamps;
+    vector<int> customers;
+    while(scanf("%d",&n)!=EOF)
+    {
+        if(n==0)
+        {
+            flag = 1 - flag;
+            num++;
+            if(num==2)
+            {
+                sort(stamps.begin(),stamps.end());
+                allocation(stamps,customers);
+                stamps.clear();
+                customers.clear();
+                num = 0;
+            }
+            continue;
+        }
+        if(!flag)
+        {
+            stamps.push_back(n);
+        }
+        else
+        {
+            customers.push_back(n);
+        }
+    }
+}
+
+
+
