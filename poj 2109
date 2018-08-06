@@ -1,0 +1,74 @@
+题意:给出n,p 范围是1<=n<= 200, 1<=p<10^101，找到一个k，1<=k<=10^9 such that k^n = p.  
+
+首先需要明确：double类型虽然能表示10^(-307)   ~   10^308, （远大于题意的1<=p<10101这个范围）,但只能精确前16位，因此必须慎用！
+那么为了避免double对输入的数在运算过程中进行精确，那么我们必须让double的运算第一步就得到一个int（即小数点尾数全为0），这个不难理解。
+然后根据题意，是求指数k，一般人自然想到利用 对数log，即k=lognp。但是不要忘记使用对数最大的问题就是没有lognp函数，只有log()函数（底数为e），
+为此要计算lognp就必须使用换底公式lognp=log(p)/log(n),即k= log(p)/log(n)，由于这使得double的运算变为了3次，而且执行除法前的两次对数运算log
+的结果未必都是int，很显然k是一个被精确了的double
+
+很多人到这里就放弃了使用double，转换方向到正常思路（二分+高精度算法），但是不要忘记求指数k除了使用对数log，还能使用指数的倒数开n次方，
+这时就可以用pow函数了
+
+k=pow(p,1.0/n)，double的运算一步到位，k自然也是一个int
+
+#include<iostream>
+#include<algorithm>
+#include<stdio.h>
+#include<math.h>
+using namespace std;
+
+int n;
+int main()
+{
+    while(scanf("%d",&n)!=EOF)
+    {
+        double p;
+        cin>>p;
+        double ans = pow(p,1.0/n);
+        cout<<ans<<endl;
+    }
+    return 0;
+}
+
+做法2：二分+高精度
+类型          长度 (bit)           有效数字          绝对值范围
+float           32                  6~7              10^(-37) ~ 10^38
+double          64                  15~16            10^(-307) ~10^308
+long double     128                 18~19            10^(-4931) ~ 10 ^ 4932
+
+由p最大值最小值的中间值开始猜k，通过比较pow(k,n)与p的大小来进一步精确k，直到找到。
+#include<stdio.h>
+#include<math.h>
+#define eps 0.0000000001
+void init(), work();
+double n, m, k;
+int main()
+{
+    init();
+    return 0;
+}
+void init()
+{
+    while(scanf("%lf %lf", &n, &m) != EOF)
+        work();
+}
+void work()
+{
+    long long left, right, mid;
+    left = 0;
+    right = 1000000002;
+    while(left + eps < right){
+        mid = (left + right) / 2;
+        if(pow(mid, n) - m > 0)
+            right = mid;
+        else
+            if(pow(mid, n) - m < 0)
+                left = mid;
+            else{
+                printf("%.0ld\n", mid) ;
+                break;
+            }
+    }
+}
+
+
