@@ -1,0 +1,174 @@
+题意：
+
+输入由p、q、r、s、t、K、A、N、C、E共10个字母组成的逻辑表达式，
+
+其中p、q、r、s、t的值为1（true）或0（false），即逻辑变量；
+
+K、A、N、C、E为逻辑运算符，
+
+K --> and:  x && y
+
+A --> or:  x || y
+
+N --> not :  !x
+
+C --> implies :  (!x)||y
+
+E --> equals :  x==y
+
+问这个逻辑表达式是否为永真式。
+
+PS:输入格式保证是合法的
+
+解题思路：（枚举五个变量的取值，总共就32种组合，可以使用暴力的方法解决）
+
+p, q, r, s, t不同的取值组合共32种情况，枚举不同取值组合代入逻辑表达式WFF进行计算。
+
+如果对于所有的取值组合，WFF值都为 true, 则结果为 tautology，否则为 not。 
+  
+WFF的计算方法：
+
+从字符串WFF的末尾开始依次向前读取字符。（从末尾开始读取）
+
+构造一个栈stack，当遇到逻辑变量 p, q, r, s ,t 则将其当前的值压栈；
+
+遇到 N 则取栈顶元素进行非运算，运算结果的值压栈；
+
+遇到K, A, C, E则从栈顶中弹出两个元素进行相应的运算，将结果的值压栈。 
+
+由于输入是合法的，当字符串WFF扫描结束时，栈stack中只剩一个值，该值就是逻辑表达式WFF的值。
+
+EKpNAqrCsNt
+其含义是：E(K(p, N(A(q, r)), C(s, N(t)))
+如果使用两个栈，一个存运算数一个存运算符，则运算的顺序变为
+E(p,K(q,N(A(r,C(S,N(t)))))) 答案错误
+
+#include<iostream>
+#include<stdio.h>
+#include<string>
+#include<stack>
+#include<map>
+using namespace std;
+
+string input;
+stack<char> opr;
+stack<int> ans;
+map<char,int> mapping;
+
+int calculator()
+{
+     for(int i=input.length()-1;i>=0;i--)
+    {
+        //char o = opr.top();
+        //opr.pop();
+        char o = input[i];
+        if(input[i]=='K'||input[i]=='A'||input[i]=='N'||input[i]=='C'||input[i]=='E')
+        {
+            if(o=='N')
+            {
+                int a = ans.top();
+                ans.pop();
+                ans.push(!a);
+            }
+            else
+            {
+                int a = ans.top();
+                ans.pop();
+                int b = ans.top();
+                ans.pop();
+                //cout<<a<<" "<<b<<endl;
+                if(o=='K')
+                {
+                    ans.push(a&&b);
+                }
+                if(o=='A')
+                {
+                    ans.push(a||b);
+                }
+                if(o=='C')
+                {
+                    if(b==0&&a==1)
+                        ans.push(0);
+                    else
+                        ans.push(1);
+                }
+                if(o=='E')
+                {
+                    if(a==b)
+                        ans.push(1);
+                    else
+                        ans.push(0);
+                }
+            }
+        }
+        else
+        {
+            char a = input[i];
+            ans.push(mapping[a]);
+        }
+    }
+    int res = ans.top();
+    while(!ans.empty())
+    {
+        ans.pop();
+    }
+    return res;
+}
+
+int main()
+{
+    cin>>input;
+    while(input!="0")
+    {
+        bool flag = true;
+        for(int p=0;p<2;p++)
+        {
+            for(int q=0;q<2;q++)
+            {
+                for(int r=0;r<2;r++)
+                {
+                    for(int s=0;s<2;s++)
+                    {
+                        for(int t=0;t<2;t++)
+                        {
+                            mapping['p'] = p; mapping['q'] = q; mapping['r'] = r; mapping['s'] = s; mapping['t'] = t;
+                           /* for(int i=0;i<input.length();i++)
+                            {
+                                if(input[i]=='K'||input[i]=='A'||input[i]=='N'||input[i]=='C'||input[i]=='E')
+                                {
+                                    opr.push(input[i]);
+                                }
+                                else
+                                {
+                                    char a = input[i];
+                                    ans.push(mapping[a]);
+                                }
+                            }*/
+                            int result = calculator();
+                            if(result==0)
+                            {
+                                flag = false;
+                                break;
+                            }
+                        }
+                        if(!flag)break;
+                    }
+                    if(!flag)break;
+                }
+                if(!flag)break;
+            }
+            if(!flag)break;
+        }
+        if(flag)
+            cout<<"tautology"<<endl;
+        else
+            cout<<"not"<<endl;
+        cin>>input;
+    }
+    return 0;
+}
+
+
+ 
+
+ 
