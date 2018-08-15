@@ -1,0 +1,107 @@
+BellmanFord 单源最短路径算法：
+给定一个图和一个源节点，找到源节点到图中所有点的最短路径，图中可能包含负边。
+Dijksra算法仅适用于图中没有负边的图，算法复杂度是O(VlogV),使用最小堆
+BellmanFord算法的复杂度是O(VE)
+
+算法描述：
+输入:图 和 源顶点src 
+输出:从src到所有顶点的最短距离。如果有负权回路(不是负权值的边),则不计算该最短距离，没有意义，因为可以穿越负权回路任意次，则最终为负无穷。
+
+算法步骤：
+1、初始化
+将除源节点外的其他所有点到源节点的距离初始化为正无穷，源节点初始化为0
+dst[v] = +∞ dist[s] = 0
+2、迭代求解
+反复对边集E中的每条边进行松弛操作，使得顶点集V中的每个顶点v的最短距离估计值逐步逼近其最短距离；（运行|v|-1次） 
+它首先计算最多一条边时的最短路径(对于所有顶点)。然后,计算最多两条边时的最短路径。外层循环需要执行|V|-1次
+3、检验负权回路
+判断边集E中的每一条边的两个端点是否收敛。如果存在未收敛的顶点，则算法返回false，表明问题无解；否则算法返回true，
+并且从源点可达的顶点v的最短距离保存在 dist[v]中。
+
+题目大意：
+有多种汇币，汇币之间可以交换，这需要手续费，当你用100A币交换B币时，A到B的汇率是29.75，手续费是0.39，那么你可以得到(100 - 0.39) * 29.75 = 2963.3975
+B币。问s币的金额经过交换最终得到的s币金额数能否增加
+货币的交换是可以重复多次的，所以我们需要找出是否存在正权回路，且最后得到的s金额是增加的
+怎么找正权回路呢？（正权回路：在这一回路上，顶点的权值能不断增加即能一直进行松弛）
+
+CODE:
+#include<iostream>
+#include<algorithm>
+#include<string.h>
+
+using namespace std;
+
+struct exchanger
+{
+    int a;
+    int b;
+    double A2B;
+    double commit;
+    exchanger(int aa,int bb,double a2b,double c)
+    {
+        a = aa;
+        b = bb;
+        A2B = a2b;
+        commit = c;
+    }
+    exchanger()
+    {
+        A2B = 0;
+        commit = 0;
+    }
+};
+
+exchanger points[202];
+int all = 0;
+
+int main()
+{
+    int N; //number of currency
+    int M; //number of exchange point
+    int dst;//currency id
+    double initAmount; //quantity of currency
+    cin>>N>>M>>dst>>initAmount;
+    for(int i=0;i<M;i++)
+    {
+        int a,b;
+        cin>>a>>b;
+        double rate,commit;
+        cin>>rate>>commit;
+        exchanger e(a,b,rate,commit);  //每两个点之间是一个兑换环
+        points[all++] = e;
+        cin>>rate>>commit;
+        exchanger e1(b,a,rate,commit);
+        points[all++] = e1;
+    }
+    //calculate the maximum amount left from initial point to each other point
+    double moneyLeft[101];
+    memset(moneyLeft,0,sizeof(moneyLeft));
+    int count = N-1;
+    moneyLeft[dst] = initAmount;
+    while(count--)  //迭代循环N-1次，从A到B的最短路径最多N-1步，如果多于N-1步则说明图中存在负圈
+    {
+        int outDegree = 0;
+        for(int i=0;i<all;i++)
+        {
+            double tempLeft = (moneyLeft[points[i].a] - points[i].commit)*points[i].A2B;
+            if(moneyLeft[points[i].b]<tempLeft)  //update the min distance to sourse point
+            {
+                moneyLeft[points[i].b] = tempLeft;
+                outDegree ++;
+            }
+        }
+        if(outDegree==0)break;  //如果一次迭代中，没有节点的最短路径发生变化，则提前跳出循环
+    }
+    //检查负圈
+    for(int j = 0; j < all;j++)
+    {
+        double k = (moneyLeft[points[j].a]-points[j].commit)*points[j].A2B;
+        if(k>moneyLeft[points[j].b])   //如果仍然存在到达某个节点的路径不断变小，则说明该边可以无限松弛
+        {
+            cout<<"YES"<<endl;
+            return 0;
+        }
+    }
+    cout<<"NO"<<endl;
+    return 0;
+}
