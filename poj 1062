@@ -1,0 +1,143 @@
+题意：
+冒险家要娶酋长的女儿，酋长要10000金子的聘金，除非他可以找到其他物品代替，则可以用更少的金子作为聘金，当冒险家去找替代品时，发现又可以用另外一些物品代替
+同时部落中有等级制度，等级差距超过M的人之间不可以进行交易。求解需要的最少金币的数量
+
+输入：
+输入第一行是两个整数M，N（1 <= N <= 100），依次表示地位等级差距限制和物品的总数。接下来按照编号从小到大依次给出了N个物品的描述。每个物品的描述开头是
+三个非负整数P、L、X（X < N），依次表示该物品的价格、主人的地位等级和替代品总数。接下来X行每行包括两个整数T和V，分别表示替代品的编号和"优惠价格"。
+
+输出：
+输出最少需要的金币数。
+
+求解思路：
+采用Dijkstra算法求解。酋长最初承诺的物品编号为1，1可以用物品a,b..代替，物品a可以用c,d...代替。因此在构建图的时候，每种物品为图中的一个节点
+当物品a可以用物品b代替时，物品a，b之间有一条边，边上的权重为作为替代品时的优惠金额。对于每个节点，要求得可以用最少的多少金币购得，则从源节点开始
+找到到每个节点的最短路径，节点1为目标节点。先找到其他替代物品的最少价格，然后回溯到1，因此节点1不是源节点。
+同时题目的约束是，部落中有等级制度，因此从所有物品拥有者的等级中枚举冒险家的等级，每次冒险家只能与等级比他高，或者在M个等级之内的人交换物品。
+
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+#include<vector>
+#include<algorithm>
+using namespace std;
+
+struct link  //图中边的定义
+{
+    int dst;  //可以替代的物品
+    int save;  //优惠金额
+    link(int d,int s)
+    {
+        dst = d;
+        save = s;
+    }
+    link()
+    {
+        dst = 0;
+        save = 0;
+    }
+};
+
+struct item
+{
+    int value; //物品的价值
+    int level;  //拥有者的等级
+    int subsituteNum;  //可以替代的物品的数量
+    link subsitute[100]; //可以替代的物品
+    item(int v,int l,int num)
+    {
+        value = v;
+        level = l;
+        subsituteNum = num;
+    }
+    item()
+    {
+        value = 0;
+        level = 0;
+        subsituteNum = 0;
+    }
+};
+
+item itemList[101]; //记录物品属性的列表
+int dst[101];      //源节点到各个节点之间的最短距离
+bool visit[101];  //记录该节点是否被访问过
+int M,N;         //最小等级差和物品的数量
+
+int dijstra()
+{
+    for(int i=0;i<N;i++)
+    {
+        int sd = 100000;
+        int node = 0;
+        //寻找最短路径
+        for(int j = 1;j<=N;j++)
+        {
+            if(!visit[j]&&dst[j]<sd)  //没被访问过，且当前距离源节点最短路径的节点
+            {
+                sd = dst[j];
+                node = j;
+            }
+        }
+        if(node==0)break;  //所有节点都被访问过了，跳出循环
+        visit[node] = true;
+        //更新可以用物品node替代的物品到源点的最短距离
+        for(int j = 0;j<itemList[node].subsituteNum;j++)
+        {
+            int index = itemList[node].subsitute[j].dst; //用这个点来替代的话要多少钱
+            int save = itemList[node].subsitute[j].save;
+            if(!visit[index]&& save+dst[node]<dst[index])  //松弛操作
+            {
+                dst[index] = save+dst[node];  //更新最短距离，优惠金额+替代品的最低价格
+            }
+        }
+    }
+    return dst[1];
+}
+
+
+
+int main()
+{
+   cin>>M>>N;
+   memset(dst,0,sizeof(dst));
+   //初始化
+   for(int i=1;i<=N;i++)
+   {
+       int value,level,linkNum;
+       cin>>value>>level>>linkNum;
+       itemList[i].value = value;
+       itemList[i].level = level;
+       for(int j=0;j<linkNum;j++)
+       {
+           int id,save;
+           cin>>id>>save;
+           itemList[id].subsitute[itemList[id].subsituteNum++] = link(i,save);
+       }
+   }
+
+   int tempPrice = 100000;
+   int maxLeval;
+   for(int i=1;i<=N;i++)
+   {
+       maxLeval = itemList[i].level;  //枚举冒险家的等级
+       memset(visit,false,sizeof(visit));
+       for(int j = 1;j<=N;j++)
+       {
+           dst[j] = itemList[j].value;  //每个物品的最小价格初始化为物品的原始价格
+           //将不符合等级制度的点设置为已访问，则可以避免接下来的操作
+           if(itemList[j].level>maxLeval||itemList[j].level<maxLeval-M)
+           {
+               visit[j] = true;
+           }
+       }
+       int price = dijstra();
+       //更新最小价格
+       if(tempPrice>price)
+       {
+           tempPrice = price;
+       }
+   }
+   cout<<tempPrice<<endl;
+   return 0;
+}
