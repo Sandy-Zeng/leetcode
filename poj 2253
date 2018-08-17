@@ -1,0 +1,101 @@
+题意：
+青蛙A站在池塘中的一块石头上，青蛙B在池塘中的另一块石头上，池塘中还有很多块石头，青蛙A要通过跳跃的方式跳到青蛙B所在的石头上，问青蛙最小跳要多长。
+
+思路：
+要求青蛙的最小跳，青蛙A到青蛙B有不止一条通路，要保证至少有一条通路连通，并且求得青蛙得最小跳步是多长，则需要求出从A到B所有路径中，最长的一段，然后从
+最长的一段中求最小值
+注意A到B的最短路径中的最长段不一定是青蛙的最小跳，所以该题不能用单源最短路径Dijkstra()进行求解
+采用Floyd算法求解。
+
+Floyd算法：
+求解图中任意两点的最短路径。
+需要两个矩阵，矩阵S，S中的元素s[i][j]记录从i到j的最短路径，矩阵D，D中的元素d[i][j]记录从i到j最短路径需要经过的点。
+假设图G中顶点个数为N，则需要对矩阵D和矩阵P进行N次更新。
+初始时，矩阵S中顶点s[i][j]的距离为顶点i到顶点j的权值；如果i和j不相邻，则s[i][j]=∞，矩阵D的值为顶点d[i][j]的j的值。
+
+接下来开始，对矩阵S进行N次更新。第1次更新时，如果s[i][j]的距离 > s[i][0]+s[0][j](s[i][0]+s[0][j]表示i与j之间经过第1个顶点的距离)，
+则更新s[i][j]为s[i][0]+s[0][j],更新d[i][j]=d[i][0]。
+同理，第k次更新时，如果s[i][j]的距离” > s[i][k-1]+s[k-1][j]，则更新s[i][j]为s[i][k-1]+s[k-1][j],s[i][j]=s[i][k-1]。更新N次之后，操作完成！
+
+Code:
+
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<iomanip>
+#include<algorithm>
+#include<math.h>
+using namespace std;
+
+struct point
+{
+    double x;
+    double y;
+    point()
+    {
+        x = 0;
+        y = 0;
+    }
+};
+
+double distance_copy(point a,point b)
+{
+    double square = (a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y);
+    double ans = sqrt(square);
+    return ans;
+}
+
+point pointList[201];
+double dst[201][201];//原点到点x的最短距离
+
+int main()
+{
+    int n;
+    cin>>n;
+    int caseNum = 1;
+    while(n!=0)
+    {
+        double x,y;
+        for(int i = 0;i<n;i++)
+        {
+            cin>>x>>y;
+            pointList[i].x = x;
+            pointList[i].y = y;
+        }
+        for(int i=0;i<n;i++)
+        {
+            for(int j = 0;j<n;j++)
+            {
+                dst[i][j] = distance_copy(pointList[i],pointList[j]);  //初始为任意两个节点之间的距离
+            }
+        }
+        for(int k = 2;k<n;k++)
+        {
+            for(int i=0;i<n;i++)
+            {
+                for(int j=i+1;j<n;j++)
+                {
+                   //主要针对由i到j的松弛,最终任意两点间的权值都会被分别松弛为最大跳的最小（但每个两点的最小不一定相同）
+                    if(dst[i][k]<dst[i][j]&&dst[k][j]<dst[i][j])  
+                    //当ik段和jk段都小于ij时选择走i-k-j否则走i-j 保证求到所有最大段的最小值
+                    //若ik>ij 那么可以选择走ij获得最小的步长
+                    {
+                        if(dst[i][k]<dst[k][j])  //选择距离最大的段，保证联通
+                        {
+                            dst[i][j] = dst[j][i] = dst[k][j];
+                        }
+                        else
+                        {
+                            dst[i][j] = dst[j][i] = dst[i][k];
+                        }
+                    }
+                }
+            }
+        }
+        cout<<"Scenario #"<<caseNum++<<endl;
+        cout<<"Frog Distance = ";
+        cout<<fixed<<setprecision(3)<<dst[0][1]<<endl;
+        cout<<endl;
+        cin>>n;
+    }
+}
