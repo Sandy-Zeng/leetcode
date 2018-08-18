@@ -1,0 +1,86 @@
+题意：
+汇率转换，通过一系列汇率的货币转换，最后能否获益
+
+思路：
+Floyd算法，求最大路径后，求最大环，看它是否满足条件。
+每一个结点都必须有到自身的环(不甚清楚原因)。
+
+Code：
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<map>
+#include<algorithm>
+using namespace std;
+
+const int inf = 0;
+double S[31][31];
+
+int main()
+{
+    int n;
+    cin>>n;
+    int cases = 1;
+    while(n!=0)
+    {
+        string name;
+        map<string,int> name2id;
+        memset(S,inf,sizeof(S));
+        for(int i=1;i<=n;i++)
+        {
+            cin>>name;
+            name2id[name] = i;  //建立字符串到id的映射
+            S[i][i] = 1;  //自身到自身的转化率默认为1，把这个赋值放到汇率表输入之后，答案错误....无语
+        }
+        int m;
+        cin>>m;
+
+        for(int i=1;i<=m;i++)  //输入，构造图
+        {
+            string currency1,currency2;
+            double rate;
+            cin>>currency1>>rate>>currency2;
+            int index1 = name2id[currency1];
+            int index2 = name2id[currency2];
+            S[index1][index2] = rate;
+        }
+
+        for(int k = 1;k<=n;k++)
+        {
+            for(int i=1;i<=n;i++)
+            {
+                for(int j=1;j<=n;j++)
+                {
+                    if(S[i][k]*S[k][j]>S[i][j])  //Floyd算法，求最大路径
+                    {
+                        S[i][j] = S[i][k]*S[k][j];
+                    }
+                }
+            }
+        }
+
+        int flag = false;
+        for(int i=1;i<=n;i++)
+        {
+            if(S[i][i]>1)  //判断自己到自己的转换是否大于1
+            {
+                flag = true;
+                break;
+            }
+        }
+        if(flag)
+        {
+            cout<<"Case "<<cases++<<": Yes"<<endl;
+        }
+        else
+        {
+            cout<<"Case "<<cases++<<": No"<<endl;
+        }
+        cin>>n;
+    }
+    return 0;
+}
+
+
+
+
