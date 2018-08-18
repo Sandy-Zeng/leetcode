@@ -1,0 +1,90 @@
+题意:
+众所周知，证券经纪业依靠的就是过度的传言。您需要想出股票经纪人中传播假情报的方法，让您的雇主在股票市场的占据优势。为了获得最大的效果，你必须蔓延最快的
+方式谣言。 不幸的是你，股票经纪人信息只信任他们的“可靠来源”，这意味着你在你传播谣言之前必须考虑到他们的接触结构。它需要特定股票经纪人和一定的时间把谣言
+传递给他的每一位同事。你的任务将是写一个程序，告诉您选择哪一个股票经纪人作为谣言的出发点和所花费多少时间将谣言扩散到整个社会的股票经纪人。这一期限是
+衡量过去的人收到信息所需的时间。
+
+使用Floyd算法，采用矩阵迭代的方式，计算出网络中两两节点之间的最短距离，然后对于最终距离矩阵中的每一行，表示从i节点出发，传播到其余其他节点的最短时间，
+则从每一行中找出最大值，再从每一行的最大值中找出最小值，为从某节点i出发，将消息传播到其余节点的最短时间。
+
+CODE:
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<iomanip>
+#include<algorithm>
+#include<math.h>
+using namespace std;
+
+int S[101][101];
+const int inf = 20;
+
+int main()
+{
+    int n;
+    cin>>n;
+    while(n!=0)
+    {
+        int contactNum;
+        memset(S,inf,sizeof(S));  //对矩阵中的节点初始化为无穷大
+        for(int i=1;i<=n;i++)
+        {
+            cin>>contactNum;
+            int id,time;
+            for(int j=0;j<contactNum;j++)
+            {
+                cin>>id>>time;
+                S[i][id] = time;
+            }
+        }
+        for(int i=0;i<=n;i++)
+        {
+            S[i][i] = 0;
+        }
+        for(int k=1;k<=n;k++)  //以每个节点为跳板
+        {
+            for(int i=1;i<=n;i++)
+            {
+                for(int j=1;j<=n;j++)
+                {
+                    if(S[i][k]+S[k][j]<S[i][j])  //更新最短距离信息
+                    {
+                        S[i][j] = S[i][k] +S[k][j];
+                    }
+                }
+            }
+        }
+        int minitime = inf;
+        int startNode = 0;
+        for(int i=1;i<=n;i++)
+        {
+            int temp = 0;
+            int disjoint = false;
+            for(int j=1;j<=n;j++)
+            {
+                if(j==i)continue;
+                if(temp<S[i][j])
+                {
+                    temp = S[i][j];     //找到每一行的最大值
+                }
+            }
+            if(temp<minitime)   //找到每一行最大值中的最小值
+            {
+                minitime = temp;
+                startNode = i;
+            }
+        }
+        if(startNode==0)
+        {
+            cout<<"disjoint"<<endl;
+        }
+        else
+        {
+            cout<<startNode<<" "<<minitime<<endl;  //输出结果
+        }
+        cin>>n;
+    }
+    return 0;
+}
+
+
