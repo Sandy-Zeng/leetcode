@@ -1,0 +1,89 @@
+题意：
+用一个7位的string代表一个编号，两个编号之间的distance代表这两个编号之间不同字母的个数。
+一个编号只能由另一个编号“衍生”出来，代价是这两个编号之间相应的distance，现在要找出一个“衍生”方案，使得总代价最小，也就是distance之和最小。
+
+题可以转化为最小代价生成树的问题。因为每两个结点之间都有路径，所以是完全图。 
+此题的关键是将问题转化为最小生成树的问题。每一个编号为图的一个顶点，顶点与顶点间的编号差即为这条边的权值，题目所要的就是我们求出最小生成树来。
+这里我用prim算法来求最小生成树。
+
+Code：
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+using namespace std;
+
+bool visit[2001];  //记录某个节点是否被加入到最小生成树中
+char truck[2001][8];  //记录每个truck的编号
+int dst[2001][2001];  //记录两两之间的距离
+const int inf = 10;
+int min_loc[2001];    //记录每个节点到其他节点的最小距离
+
+int cal_dis(int a,int b)  //计算两个编号之间的距离
+{
+    int k = 0;
+    for(int i=0;i<7;i++)
+    {
+        if(truck[a][i]!=truck[b][i])
+            k++;
+    }
+    return k;
+}
+
+int main()
+{
+    int n;
+    cin>>n;
+    while(n!=0)
+    {
+        for(int i=1;i<=n;i++)
+        {
+            cin>>truck[i];
+        }
+        for(int i=1;i<=n;i++)
+        {
+            for(int j=i+1;j<=n;j++)
+            {
+                int d = cal_dis(i,j);
+                dst[i][j] = dst[j][i] = d;
+            }
+        }
+
+        int ans = 0;
+        int count = 1;
+        int s = 1;  //初始源点编号为1
+        memset(visit,false,sizeof(visit));
+        memset(min_loc,inf,sizeof(min_loc));
+        visit[1] = true;
+        int min_w = inf; //源点到其他点的最短距离
+        int newS;
+
+        while(true)
+        {
+            if(count==n)break;  //所有节点都已经加入到生成树中
+            for(int j = 2;j<=n;j++)
+            {
+                if(!visit[j]&&min_loc[j]>dst[s][j])     //更新节点j到其他节点的最短距离，每个节点保持一个到当前生成树的最小距离
+                {
+                    min_loc[j] = dst[s][j];
+                }
+                if(!visit[j]&&min_w>min_loc[j])        //更新该轮的最小距离
+                {
+                    min_w = min_loc[j];
+                    newS = j;    //记录节点编号
+                }
+            }
+            ans+=min_w;
+            count++;
+            s = newS;   //合并生成树
+            visit[s] = true;
+            min_w = inf;
+        }
+        cout<<"The highest possible quality is 1/"<<ans<<"."<<endl;
+        cin>>n;
+    }
+    return 0;
+}
+
+
+
+
