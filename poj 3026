@@ -1,0 +1,189 @@
+题意：
+给定一个迷宫，迷宫中空格代表可以通行的路径，#表示墙不能通行，A为外星人在的地方，S为起点，当碰到S或A时，可以分为几路行走。问最少的步数，连接迷宫中的A和S
+
+思路：
+对图中的A和S点，看成是相同的点，然后BFS计算两两之间距离，然后用最小生成树算法，计算最小生成树
+
+最后要注意的就是 字符的输入
+cin不读入空字符（包括 空格，换行等）
+gets读入空格，但不读入换行符）
+
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<queue>
+#include<vector>
+using namespace std;
+
+struct point
+{
+    int x;
+    int y;
+    point(int x1,int y1)
+    {
+        x = x1;
+        y = y1;
+    }
+};
+
+char maze[51][51];
+int y,x;
+const int inf = 300;
+
+int BFS(point src,point dst)
+{
+    queue<point> S;
+    S.push(src);
+    bool visit[251][251];
+    memset(visit,false,sizeof(visit));
+    visit[src.x][src.y] = true;
+    int step = 0;
+    int num = 1;
+    int tempCount = 0;
+    int flag = false;
+    while(!S.empty())
+    {
+        while(num--)
+        {
+            point s = S.front();
+            S.pop();
+            if(s.x == dst.x && s.y == dst.y)
+            {
+                flag = true;
+                break;
+            }
+            else
+            {
+                if(s.x-1>=0 && !visit[s.x-1][s.y] && maze[s.x-1][s.y]!='#' )
+                {
+                    S.push(point(s.x-1,s.y));
+                    visit[s.x-1][s.y] = true;
+                    tempCount++;
+                }
+                if(s.y-1>=0 && !visit[s.x][s.y-1] && maze[s.x][s.y-1]!='#')
+                {
+                    S.push(point(s.x,s.y-1));
+                    visit[s.x][s.y-1] = true;
+                    tempCount++;
+                }
+                if(s.x+1<y && !visit[s.x+1][s.y] && maze[s.x+1][s.y]!='#')
+                {
+                    S.push(point(s.x+1,s.y));
+                    visit[s.x+1][s.y] = true;
+                    tempCount++;
+                }
+                if(s.y+1<x && !visit[s.x][s.y+1] && maze[s.x][s.y+1]!='#')
+                {
+                    S.push(point(s.x,s.y+1));
+                    visit[s.x][s.y+1] = true;
+                    tempCount++;
+                }
+            }
+        }
+        if(flag==false)
+        {
+            num = tempCount;
+            tempCount = 0;
+            step++;
+        }
+        else
+        {
+            break;
+        }
+    }
+    return step;
+}
+
+int prim(int **dst,int n)
+{
+    int totalStep = 0;
+    int s = 0;
+    bool visit[251];
+    int min_loc[251];
+    memset(visit,false,sizeof(visit));
+    memset(min_loc,inf,sizeof(min_loc));
+    int m = 1;
+    visit[0] = true;
+    int min_w;
+    int tempS;
+    while(true)
+    {
+        if(m==n)
+            break;
+        min_w = inf;
+        for(int i=1;i<n;i++)
+        {
+            if(!visit[i]&&min_loc[i]>dst[s][i])
+            {
+                min_loc[i] = dst[s][i];
+            }
+            if(!visit[i]&&min_w>min_loc[i])
+            {
+                min_w = min_loc[i];
+                tempS = i;
+            }
+        }
+        totalStep += min_w;
+        s = tempS;
+        m++;
+        visit[s] = true;
+    }
+    return totalStep;
+}
+
+int main()
+{
+    int n;
+    cin>>n;
+    while(n--)
+    {
+        vector<point> alinePoint;
+        cin>>x>>y;
+        int alineCount = 0;
+        char temp[51];
+		    gets(temp);    
+        for(int i=0;i<y;i++)
+        {
+            gets(maze[i]);
+            for(int j = 0;j<x;j++)
+            {
+                //cin>>maze[i][j];
+                if(maze[i][j]=='A'||maze[i][j]=='S')
+                {
+                    alineCount++;
+                    alinePoint.push_back(point(i,j));
+                }
+            }
+        }
+
+
+        int **dst = new int*[alineCount];
+        for(int i=0;i<alineCount;i++)
+        {
+            dst[i] = new int[alineCount];
+        }
+
+         for(int i=0;i<alineCount;i++)
+        {
+            for(int j = 0;j<alineCount;j++)
+            {
+               dst[i][j] = 0;
+            }
+        }
+
+        for(int i=0;i<alineCount;i++)
+        {
+            for(int j = i+1;j<alineCount;j++)
+            {
+                dst[i][j] = dst[j][i] = BFS(alinePoint[i],alinePoint[j]);
+                //cout<<"SRC "<<alinePoint[i].x<<" "<<alinePoint[i].y<<endl;
+               // cout<<"SRC "<<alinePoint[j].x<<" "<<alinePoint[j].y<<endl;
+                //cout<<dst[i][j]<<endl;
+            }
+        }
+
+        int totalSteps = prim(dst,alineCount);
+        cout<<totalSteps<<endl;
+    }
+    return 0;
+}
