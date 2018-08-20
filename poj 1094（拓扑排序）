@@ -1,0 +1,174 @@
+题意：
+确定字母表中中的n个字母，给出m对关系，根据给出的关系输入，确定一个排序。
+输入一对关系，如果判定有结果，则可以忽略后面输入数据，即使后面输入数据能改变结果，也不用管。
+所以应该每输入一个关系就去更新当前的图，然后进行一趟拓扑排序。一旦产生结果，再对后面的数据处理下，就可以输出结果。
+
+注意：矛盾优先规则
+在使用“无前驱结点”算法时必须要注意，在“矛盾优先”的规律下，必须考虑一种特殊情况，就是多个无前驱结点与环共存时的情况，
+即输入过程中子图都是有 多个无前驱结点，最后一步输入后出现了环，根据算法的特征，很容易输出“不能确认排序”，这是错的，必须适当修改算法，输出“矛盾”。
+
+例如：
+6 6
+A<F
+B<D
+C<E
+F<D
+D<E
+E<F
+
+输出矛盾
+
+Code：
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<queue>
+#include<vector>
+using namespace std;
+
+int indegree[26];  //记录每个节点的入度
+bool visit[26];    //记录该节点是否已经被排序
+bool appear[26];   //记录当前输入的子图中出现的节点
+int relation[26][26];  //邻接矩阵
+vector<char> sortSequence; //拓扑排序序列
+
+int topSort(int n,int countNum)
+{
+    sortSequence.clear();
+    int tempin[26];
+    memset(visit,false,sizeof(visit));
+    for(int i=0;i<26;i++)
+    {
+        tempin[i] = indegree[i];
+    }
+
+    int s = -1;
+    int zeroDegree = 0;
+    int uncetainFlag = false;
+    for(int i=0;i<n;i++)   //记录入度为0的节点的个数
+    {
+        if(tempin[i]==0 && appear[i])
+        {
+            s = i;
+            zeroDegree++;
+        }
+    }
+    if(zeroDegree==0)  //can not determined
+    {
+        return 1;
+    }
+    if(zeroDegree>1)   //inconsistency
+    {
+        uncetainFlag = true;   //根据矛盾优先的规则，如果有多个入度为0的节点，先记录下来，不返回，防止在剩下的子图中有环
+    }
+    int count = 1;
+    sortSequence.push_back('A'+s);
+    while(count<countNum)
+    {
+        visit[s] = true;
+        zeroDegree = 0;
+        int temps = -1;
+        for(int i=0;i<n;i++)
+        {
+            if(relation[s][i]==1)
+            {
+                tempin[i]--;  //将该节点指向节点的入度减1
+            }
+        }
+        for(int i=0;i<n;i++)   //统计入度为0的节点数目
+        {
+            if(tempin[i]==0 &&!visit[i] && appear[i])
+            {
+                zeroDegree++;
+                temps = i;
+            }
+        }
+        if(zeroDegree>1)
+        {
+            uncetainFlag = true;  //多个入度为0的前驱节点
+        }
+        if(zeroDegree==0)
+        {
+            return 1;      //出现矛盾
+        }
+        s = temps;
+        sortSequence.push_back('A'+s);
+        count++;
+    }
+    if(uncetainFlag || count<n)
+    {
+        return -1;       //序列还不能确定
+    }
+    else
+    {
+        return 0;       //有序序列可以确定
+    }
+}
+
+
+int main()
+{
+   int n,m;
+   while(scanf("%d%d",&n,&m))
+   {
+       if(n==0&&m==0)
+       {
+           break;
+       }
+       memset(indegree,0,sizeof(indegree));
+       memset(relation,0,sizeof(relation));
+       memset(appear,false,sizeof(appear));
+       int flag = false;
+       int countNum = 0;
+       for(int i = 0;i<m;i++)
+       {
+           char a,c,b;
+           cin>>a>>c>>b;
+           if(!flag)  //当前结果还没确定
+           {
+               int index1 = a -'A';
+               int index2 = b -'A';
+               if(relation[index1][index2]==0)
+               {
+                    relation[index1][index2] = 1;
+                    indegree[index2]++;
+               }
+               if(!appear[index1])
+               {
+                   appear[index1] = true;
+                   countNum++;
+               }
+               if(!appear[index2])
+               {
+                   appear[index2] = true;
+                   countNum++;
+               }
+               int ans = topSort(n,countNum);
+               if(ans==1)   //根据拓扑排序算法返回的结果，输出
+               {
+                   cout<<"Inconsistency found after "<<i+1<<" relations."<<endl;
+                   flag = true;
+               }
+               if(ans ==-1&&i==m-1)
+               {
+                   cout<<"Sorted sequence cannot be determined."<<endl;
+                   flag = true;
+               }
+               if(ans==0)
+               {
+                   cout<<"Sorted sequence determined after "<<i+1<<" relations: ";
+                   for(int j = 0;j<sortSequence.size();j++)
+                   {
+                       cout<<sortSequence[j];
+                   }
+                   cout<<"."<<endl;
+                   flag = true;
+               }
+           }
+       }
+   }
+   return 0;
+}
+
+
+ 
