@@ -1,0 +1,120 @@
+题意：
+根据给出的一系列DNA序列，找出在这些DNA序列中最长的公共子串，如果有多个公共子串，则输出字典序最小的那一个
+
+解题思路：
+使用暴力解法，根据第一个DNA序列为模板，一次截取长度为1-60的子串，因为要输出最长的子序列，所以长度可以从60递减，可以减少判断的次数，然后依次判断该子串
+是否在其他DNA序列中出现
+
+有用的字符串处理函数：strstr(str1,str2) 位于头文件string.h中
+strstr(str1,str2) 函数用于判断字符串str2是否是str1的子串。如果是，则该函数返回str2在str1中首次出现的地址；否则，返回NULL。
+
+对于字符串处理的题目，用char数组比用string类要快得多，可能就是AC和TE的区别，尽量用char数组，不要因为麻烦习惯性用string
+
+一开始不知道strstr函数，多重循环判断，flag多到头晕。。。
+
+#include<iostream>
+#include<stdio.h>
+#include<string.h>
+#include<string>
+#include<stdlib.h>
+using namespace std;
+
+char baseSeq[11][61];
+char commonSeq[61];
+int n;
+int m;
+
+int calSeq()
+{
+    char tempSeq[61];
+    int curLen = 0;
+    for(int i=60;i>=3&&curLen==0;i--)
+    {
+        //cout<<i<<endl;
+        for(int j=0;j<61-i;j++)
+        {
+            int len = 0;
+            memset(tempSeq,'\0',sizeof(tempSeq));
+            for(int k=j;k<j+i;k++)
+            {
+                tempSeq[len++] = baseSeq[0][k];
+            }
+            int flag = false;
+            for(int k=1;k<m;k++)
+            {
+                int flag2 = false;
+                for(int t=0;t<60;t++)
+                {
+                    int flag1 = false;
+                    for(int r=0;r<i;r++)
+                    {
+                        if(baseSeq[k][t+r]!=tempSeq[r])
+                        {
+                            flag1 = true;
+                            break;
+                        }
+                    }
+                    if(!flag1)  //has sub sequence
+                    {
+                        flag2 = true;
+                        break;
+                    }
+                }
+                if(!flag2)   //sub sequence doesn't exist
+                {
+                    flag = true;
+                    break;
+                }
+            }
+            if(!flag)  //subsequence coexist in all sequences
+            {
+                if(i>curLen)
+                {
+                    for(int k=0;k<len;k++)
+                    {
+                        commonSeq[k] = tempSeq[k];
+                    }
+                    commonSeq[len] = '\0';
+                    curLen = len;
+                }
+                if(i==curLen)
+                {
+                    if(strcmp(commonSeq,tempSeq)>0)
+                    {
+                        strcpy(commonSeq,tempSeq);
+                        commonSeq[len] = '\0';
+                    }
+                }
+            }
+        }
+    }
+    return curLen;
+}
+
+int main()
+{
+    cin>>n;
+    for(int i=0;i<n;i++)
+    {
+        cin>>m;
+        memset(baseSeq,'\0',sizeof(baseSeq));
+        memset(commonSeq,'\0',sizeof(commonSeq));
+        for(int j=0;j<m;j++)
+        {
+            cin>>baseSeq[j];
+        }
+        int len = calSeq();
+        if(len<3)
+        {
+            cout<<"no significant commonalities"<<endl;
+        }
+        else
+        {
+            cout<<commonSeq<<endl;
+        }
+    }
+    return 0;
+}
+
+
+
