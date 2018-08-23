@@ -1,0 +1,96 @@
+题意：
+给出一个序列，每次只能与相邻的数字交换，问最少需要多少次才能将序列变为有序的序列
+
+一个乱序序列的 逆序数 = 在只允许相邻两个元素交换的条件下,得到有序序列的交换次数
+
+这题也可以直接求逆序数，无需借助归并排序
+把S[i]和s[i+1~n]的元素逐个比较，如果s[i] > s[k] (k∈[i+1,n]) 则逆序数t++  O(n^2)算法
+
+借助归并排序计算逆序数，算法复杂度O（nlogn）
+
+
+CODE:
+#include<iostream>
+#include<stdio.h>
+#include<stdlib.h>
+#include<algorithm>
+#include<string.h>
+using namespace std;
+
+int seq[1001];
+int n;
+int m;
+int t = 0;//序列中的逆序数
+
+void compute_t(int s,int mid,int e)
+{
+    int len1 = mid - s + 1;
+    int len2 = e - mid;
+    int *left = new int[len1];
+    int *right = new int[len2];
+    int k = 0;
+    for(int i=s;i<=mid;i++)
+    {
+        left[k++] = seq[i];   //分开两个数组
+    }
+    k = 0;
+    for(int i=mid+1;i<=e;i++)
+    {
+        right[k++] = seq[i];
+    }
+    int lpos = 0;
+    int rpos = 0;
+    int spos = s;
+    while(lpos<len1 && rpos <len2)  //归并排序
+    {
+        if(left[lpos]<=right[rpos])
+        {
+            seq[spos++] = left[lpos];
+            lpos++;
+        }
+        else  //如果右边的比左边的小，则左边剩下的所有元素与该右边队列头的元素都为逆序对
+        {
+            seq[spos++] = right[rpos];
+            rpos++;
+            t+=(len1-lpos);   //计算左边剩下所有元素的数目，增加逆序对计数
+        }
+    }
+    while(lpos<len1)
+    {
+        seq[spos++] = left[lpos++];
+    }
+    while(rpos<len2)
+    {
+        seq[spos++] = right[rpos++];
+    }
+    return;
+}
+
+int mergeSort(int s,int e)
+{
+    if(s<e)
+    {
+        int mid = (s+e)/2;
+        mergeSort(s,mid);
+        mergeSort(mid+1,e);
+        compute_t(s,mid,e);
+    }
+}
+int main()
+{
+    cin>>n;
+    for(int i=0;i<n;i++)
+    {
+        cin>>m;
+        t = 0;
+        for(int j=0;j<m;j++)
+        {
+            cin>>seq[j];
+        }
+        mergeSort(0,m-1);
+        cout<<"Scenario #"<<i+1<<":"<<endl;
+        cout<<t<<endl;
+        cout<<endl;
+    }
+    return 0;
+}
