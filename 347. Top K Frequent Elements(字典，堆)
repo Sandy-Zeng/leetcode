@@ -1,0 +1,39 @@
+Given a non-empty array of integers, return the k most frequent elements.
+
+Input: nums = [1,1,1,2,2,3], k = 2
+Output: [1,2]
+
+You may assume k is always valid, 1 ≤ k ≤ number of unique elements.
+Your algorithm's time complexity must be better than O(n log n), where n is the array's size.
+
+要求时间复杂度要低于NlogN
+首先将每个元素出现的次数用O（N）的时间复杂度映射到字典中
+然后用堆排序选出出现频率前K的元素
+
+这里直接用了对字典进行排序的做法，压缩为字典之后元素个数<=N 
+然后用O（K）的时间复杂度构建答案列表
+
+
+class Solution(object):
+    def topKFrequent(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: List[int]
+        """
+        numberDict = {}
+        res = []
+        for num in nums:
+            if num in numberDict:
+                numberDict[num] = numberDict[num] + 1
+            else:
+                numberDict[num] = 1
+        
+        numberDict = sorted(numberDict.items(),key=lambda x:x[1],reverse=True)
+        
+        for i in range(k):
+            res.append(numberDict[i][0])
+            
+        return res
+                    
+                    
