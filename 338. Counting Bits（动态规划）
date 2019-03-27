@@ -1,0 +1,41 @@
+Given a non negative integer number num. For every numbers i
+in the range 0 ≤ i ≤ num calculate the number of 1's in their 
+binary representation and return them as an array.
+
+给出小于num的每个数的二进制数中的1的个数
+
+Input: 2
+Output: [0,1,1]
+
+It is very easy to come up with a solution with run time O(n*sizeof(integer)).
+But can you do it in linear time O(n) /possibly in a single pass?
+
+解法：
+动态规划：
+每次如果是2的指数倍，则二进制数中只有一个1，进位之后减去进位数，从已有解中求子答案。
+比如4 是100
+5中1的个数为 res[5-4] + 1; 
+
+class Solution {
+public:
+    vector<int> countBits(int num) {
+        vector<int> res;
+        res.push_back(0);
+        if(num==0)return res;
+        res.push_back(1);
+        int lastone = 1;
+        for(int i=2;i<=num;i++)
+        {
+            if(lastone*2==i)
+            {
+                res.push_back(1);
+                lastone = i;
+            }
+            else
+            {
+                res.push_back(res[i-lastone]+1);
+            }
+        }
+        return res;
+    }
+};
