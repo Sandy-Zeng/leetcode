@@ -1,0 +1,61 @@
+Given a collection of distinct integers, return all possible permutations.
+
+Input: [1,2,3]
+Output:
+[
+  [1,2,3],
+  [1,3,2],
+  [2,1,3],
+  [2,3,1],
+  [3,1,2],
+  [3,2,1]
+]
+
+解法：
+建立一个队列，将当前遍历的子序列都push到里面，每次从队列中取一个子序列，如果子序列的长度和原数组的大小相同，则push到答案数组中
+对每一个子序列，遍历当前没有在序列中的数，然后依次添加到序列最后方
+
+
+
+
+Code:
+class Solution {
+public:
+    vector<vector<int>> permute(vector<int>& nums) {
+        int N = nums.size();
+        vector<vector<int>> res;
+        queue<vector<int>> q; //队列数据结构
+        vector<int> row;
+        q.push(row);
+        while(!q.empty())
+        {
+            vector<int> row = q.front();
+            q.pop();
+            if(row.size()==N)
+            {
+                res.push_back(row);
+            }
+            else
+            {
+                int rowS = row.size();
+                for(int i=0;i<N;i++)
+                {
+                    if(find(row.begin(),row.end(),nums[i])!=row.end())
+                        continue;
+                    if(rowS == row.size())   //每次只在序列后面加一个数字
+                    {
+                        row.push_back(nums[i]);
+                    }
+                    else
+                    {
+                        row[rowS] = nums[i];
+                    }
+                    
+                    q.push(row);  //push到队列中
+                }
+            }
+        }
+        return res;
+    }
+
+};
