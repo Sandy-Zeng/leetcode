@@ -1,0 +1,40 @@
+Given a string s, partition s such that every substring of the partition is a palindrome.
+
+Return all possible palindrome partitioning of s.
+
+Input: "aab"
+Output:
+[
+  ["aa","b"],
+  ["a","a","b"]
+]
+
+class Solution(object):
+    def checkPalindrome(self, string):  //判断是否是回文串,用set来防止重复判断
+        if len(string) == 1 or string in self.palindromeSet:
+            return True
+        for i in xrange(0, len(string) / 2):
+            if string[i] != string[len(string) - i - 1]:
+                return False
+        self.palindromeSet.add(string)
+        return True
+
+    def createPartitions(self, auxBuffer, inputString, index):
+        if index == len(inputString):
+            self.results.append(auxBuffer)
+            return
+        for i in range(index, len(inputString)):   //递归切分 先分左边是回文，然后分右边
+            if self.checkPalindrome(inputString[index:i + 1]):
+                self.createPartitions(auxBuffer + [inputString[index:i + 1]], inputString, i + 1)
+
+    def partition(self, s):
+        """
+        :type s: str
+        :rtype: List[List[str]]
+        """
+        if not s:
+            return []
+        self.results = []
+        self.palindromeSet= set()
+        self.createPartitions([], s, 0)
+        return self.results
